@@ -25,7 +25,7 @@ void TcpConnection::read()
 {
 	auto self(shared_from_this());
 
-	socket_.async_read_some(boost::asio::buffer(buffer_), [this, self](const boost::system::error_code &err, size_t len)
+	socket_.async_read_some(boost::asio::buffer(buf, 10), [this, self](const boost::system::error_code &err, size_t len)
 	{
 		if (err)
 		{
@@ -33,7 +33,9 @@ void TcpConnection::read()
 		}
 		else
 		{
-			messageCallback_(shared_from_this());
+			buffer_.ensureWritableBytes(len);
+			//buffer_.hasWritten(len);
+			//messageCallback_(shared_from_this());
 			read();
 		}
 	});

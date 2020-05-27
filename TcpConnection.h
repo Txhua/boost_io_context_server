@@ -5,7 +5,7 @@
 #include <boost/noncopyable.hpp>
 #include <memory>
 #include "Callbacks.h"
-#include <array>
+#include "Buffer.h"
 
 namespace IOEvent
 {
@@ -25,18 +25,20 @@ public:
 	void setCloseCallback(CloseCallback cb) { closeCallback_ = std::move(cb); }
 	void connectEstablished();
 	const std::string &name()const { return name_; }
-	std::array<char, 1024> *buffer() { return &buffer_; }
+	Buffer *buffer() { return &buffer_; }
 private:
+	enum { max_body_length = 1024 };
 	void read();
 	void write();
 private:
 	const std::string name_;
 	ip::tcp::socket socket_;
-	std::array<char, 1024> buffer_;
+	Buffer buffer_;
 	ConnectionCallback connectionCallback_;
 	MessageCallback messageCallback_;
 	WriteCompleteCallback writeCompleteCallback_;
 	CloseCallback closeCallback_;
+	char buf[5];
 };
 
 
