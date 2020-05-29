@@ -4,6 +4,7 @@
 #include "Callbacks.h"
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/noncopyable.hpp>
 #include <atomic>
 #include <map>
 namespace IOEvent
@@ -11,7 +12,7 @@ namespace IOEvent
 using namespace boost::asio;
 class Acceptor;
 
-class TcpServer
+class TcpServer final : public boost::noncopyable
 {
 	using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
 public:

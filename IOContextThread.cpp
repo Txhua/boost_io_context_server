@@ -1,6 +1,7 @@
 ﻿#include "IOContextThread.h"
 #include <cassert>
 #include "Types.h"
+#include <iostream>
 
 namespace IOEvent
 {
@@ -14,6 +15,7 @@ IOContextThread::IOContextThread()
 
 IOContextThread::~IOContextThread()
 {
+	std::cout << "IOContextThread::~IOContextThread()" << std::endl;
 	if (started_)
 	{
 		stop();

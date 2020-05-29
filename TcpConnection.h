@@ -6,6 +6,7 @@
 #include <memory>
 #include "Callbacks.h"
 #include "Buffer.h"
+#include <array>
 
 namespace IOEvent
 {
@@ -25,20 +26,24 @@ public:
 	void setCloseCallback(CloseCallback cb) { closeCallback_ = std::move(cb); }
 	void connectEstablished();
 	const std::string &name()const { return name_; }
-	Buffer *buffer() { return &buffer_; }
+	Buffer *inputBuffer() { return &inputBuffer_; }
+	Buffer *outputBuffer() { return &outputBuffer_; }
+	void shutdown();
+	void send();
 private:
-	enum { max_body_length = 1024 };
-	void read();
+	void readHeader();
+	void readBody();
 	void write();
+	void shutdownInThisThread();
 private:
 	const std::string name_;
 	ip::tcp::socket socket_;
-	Buffer buffer_;
+	Buffer inputBuffer_;
+	Buffer outputBuffer_;
 	ConnectionCallback connectionCallback_;
 	MessageCallback messageCallback_;
 	WriteCompleteCallback writeCompleteCallback_;
 	CloseCallback closeCallback_;
-	char buf[5];
 };
 
 
