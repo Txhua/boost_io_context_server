@@ -8,7 +8,7 @@
 namespace IOEvent
 {
 TcpConnection::TcpConnection(ip::tcp::socket&& socket, const std::string& name)
-	:socket_(std::move(socket)),
+	:socket_(std::move(socket)),	
 	name_(name)
 {
 	socket_.set_option(ip::tcp::no_delay(true));
@@ -27,7 +27,7 @@ void TcpConnection::connectEstablished()
 
 void TcpConnection::shutdown()
 {
-	boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::shutdown, shared_from_this()));
+	boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::shutdownInThisThread, shared_from_this()));
 }
 
 void TcpConnection::send()
@@ -47,7 +47,7 @@ void TcpConnection::readHeader()
 	{
 		if (error)
 		{
-			LOG(WARNING) << "readHeader() error! " << name_;
+			LOG(WARNING) << "readHeader() error! " << name_ << " error message: " << error.message();
 			shutdownInThisThread();
 			closeCallback_(shared_from_this());
 		}
@@ -69,7 +69,7 @@ void TcpConnection::readBody()
 	{
 		if (error)
 		{
-			LOG(WARNING) << "readBody() error! " << name_;
+			LOG(WARNING) << "readBody() error! " << name_ << " error message: " << error.message();
 			shutdownInThisThread();
 			closeCallback_(shared_from_this());
 		}

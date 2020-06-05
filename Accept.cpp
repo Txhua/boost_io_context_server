@@ -2,6 +2,7 @@
 #include <boost/system/error_code.hpp>
 #include <iostream>
 #include "IOContextThreadPool.h"
+#include <glog/logging.h>
 namespace IOEvent
 {
 Acceptor::Acceptor(io_context & ios, const Endpoint & endpoint)
@@ -9,7 +10,6 @@ Acceptor::Acceptor(io_context & ios, const Endpoint & endpoint)
 	socket_(ios),
 	ioContextPool_(std::make_unique<IOContextThreadPool>(ios))
 {
-	ioContextPool_->setThreadNum(5);
 }
 
 Acceptor::~Acceptor()
@@ -20,6 +20,11 @@ Acceptor::~Acceptor()
 void Acceptor::setNewConnectCallback(NewConnectCallback cb)
 {
 	newConnectCallback_ = std::move(cb);
+}
+
+void Acceptor::setThreadNum(int numThreads)
+{
+	ioContextPool_->setThreadNum(numThreads);
 }
 
 void Acceptor::accept()
@@ -33,6 +38,7 @@ void Acceptor::accept()
 		}
 		else
 		{
+			LOG(WARNING) << "accept failed! " << error.message();
 			socket_.close();
 		}
 		accept();

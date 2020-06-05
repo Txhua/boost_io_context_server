@@ -4,7 +4,6 @@
 #include "Callbacks.h"
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/noncopyable.hpp>
 #include <atomic>
 #include <map>
 namespace IOEvent
@@ -12,7 +11,7 @@ namespace IOEvent
 using namespace boost::asio;
 class Acceptor;
 
-class TcpServer final : public boost::noncopyable
+class TcpServer
 {
 	using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
 public:
@@ -23,6 +22,7 @@ public:
 	void setConnectionCallback(ConnectionCallback cb) { connectionCallback_ = std::move(cb); }
 	void setMessageCallback(MessageCallback cb) { messageCallback_ = std::move(cb); }
 	void setWriteCompleteCallback(WriteCompleteCallback cb) { writeCompleteCallback_ = std::move(cb); }
+	void setThreadNum(int numThreads);
 private:
 	void removeConnection(const TcpConnectionPtr &conn);
 	void newConnection(ip::tcp::socket &&socket);

@@ -17,6 +17,7 @@ public:
 	explicit Acceptor(io_context &ios, const Endpoint &endpoint);
 	~Acceptor();
 	void setNewConnectCallback(NewConnectCallback cb);
+	void setThreadNum(int numThreads);
 	void accept();
 	void start();
 private:

@@ -3,14 +3,12 @@
 
 #include <boost/noncopyable.hpp>
 #include "Callbacks.h"
-#include "Buffer.h"
-#include "TcpConnection.h"
 #include "StringPiece.h"
-#include <glog/logging.h>
+
 
 namespace IOEvent
 {
-
+class Buffer;
 class LengthHeaderCodec : public boost::noncopyable
 {
 	using StringMessageCallback = std::function<void(const TcpConnectionPtr&, std::string& message)>;
@@ -18,6 +16,7 @@ public:
 	LengthHeaderCodec(StringMessageCallback cb);
 	~LengthHeaderCodec();
 	void onMessage(const TcpConnectionPtr &conn, Buffer *message);
+	// not thread save
 	void send(const TcpConnectionPtr &conn, const StringPiece &str);
 	void send(const TcpConnectionPtr &conn, const void *data, size_t len);
 	void send(const TcpConnectionPtr &conn, const char *data, size_t len);

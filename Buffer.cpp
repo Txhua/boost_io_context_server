@@ -1,4 +1,8 @@
-﻿#include "Buffer.h"
+#include "Buffer.h"
+#include <boost/asio/detail/socket_ops.hpp>
+#include <assert.h>
+#include <algorithm>
+
 namespace IOEvent
 {
 
@@ -84,7 +88,6 @@ void Buffer::ensureWritableBytes(size_t len)
 	assert(writableBytes() >= len);
 }
 
-
 char * Buffer::beginWrite()
 {
 	return begin() + writerIndex_;
@@ -110,13 +113,13 @@ void Buffer::unwrite(size_t len)
 void Buffer::appendInt32(int32_t x)
 {
 	int32_t be32 = boost::asio::detail::socket_ops::host_to_network_long(x);
-	append(&be32, sizeof(be32));
+	append(&be32, sizeof (be32));
 }
 
 void Buffer::appendInt16(int16_t x)
 {
 	int16_t be16 = boost::asio::detail::socket_ops::host_to_network_short(x);
-	append(&be16, sizeof(be16));
+	append(&be16, sizeof (be16));
 }
 
 void Buffer::appendInt8(int8_t x)
@@ -149,7 +152,7 @@ int32_t Buffer::peekInt32() const
 {
 	assert(readableBytes() >= sizeof(int32_t));
 	int32_t be32 = 0;
-	::memcpy(&be32, peek(), sizeof(be32));
+	::memcpy(&be32, peek(), sizeof (be32));
 	return boost::asio::detail::socket_ops::network_to_host_long(be32);
 }
 
@@ -177,12 +180,12 @@ void Buffer::prependInt32(int32_t x)
 void Buffer::prependInt16(int16_t x)
 {
 	int16_t be16 = boost::asio::detail::socket_ops::host_to_network_short(x);
-	prepend(&be16, sizeof(be16));
+	prepend(&be16, sizeof (be16));
 }
 
 void Buffer::prependInt8(int8_t x)
 {
-	prepend(&x, sizeof(x));
+	prepend(&x, sizeof (x));
 }
 
 void Buffer::prepend(const void * data, size_t len)
@@ -233,3 +236,6 @@ void Buffer::makeSpace(size_t len)
 }
 
 }
+
+
+
