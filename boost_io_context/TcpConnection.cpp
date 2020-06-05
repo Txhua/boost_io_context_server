@@ -35,6 +35,21 @@ void TcpConnection::send()
 	boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::write, shared_from_this()));
 }
 
+void TcpConnection::send(Buffer * buf)
+{
+	boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::sendInThisThread, shared_from_this(), buf->retrieveAllAsString()));
+}
+
+void TcpConnection::sendInThisThread(const StringPiece & str)
+{
+	auto write_in_progress = (outputBuffer_.readableBytes() == 0) ? true : false;
+	outputBuffer_.append(str.data(), str.size());
+	if (write_in_progress)
+	{
+		write();
+	}
+}
+
 void TcpConnection::shutdownInThisThread()
 {
 	socket_.shutdown(socket_base::shutdown_type::shutdown_send);

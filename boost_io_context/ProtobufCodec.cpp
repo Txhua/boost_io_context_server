@@ -37,8 +37,6 @@ void ProtobufCodec::onMessage(const TcpConnectionPtr & conn, Buffer * buf)
 void ProtobufCodec::send(const TcpConnectionPtr & conn, google::protobuf::Message * message)
 {
 	Buffer buff;
-	auto *outPutBuff = conn->outputBuffer();
-	auto write_in_progress = (outPutBuff->readableBytes() == 0) ? true : false;
 	const std::string &typeName = message->GetTypeName();
 	int32_t nameLen = static_cast<int32_t>(typeName.size() + 1);
 	buff.appendInt32(nameLen);
@@ -55,11 +53,9 @@ void ProtobufCodec::send(const TcpConnectionPtr & conn, google::protobuf::Messag
 	int32_t checkSum = static_cast<int32_t>(::adler32(1, reinterpret_cast<const Bytef*>(buff.peek()), static_cast<int>(buff.readableBytes())));
 	buff.appendInt32(checkSum);
 	assert(buff.readableBytes() == sizeof(nameLen) + nameLen + byteSize + sizeof(checkSum));
-	outPutBuff->append(buff.peek(), buff.readableBytes());
-	if (write_in_progress)
-	{
-		conn->send();
-	}
+	int32_t len = boost::asio::detail::socket_ops::host_to_network_long(static_cast<int32_t>(buff.readableBytes()));
+	buff.prepend(&len, sizeof(len));	
+	conn->send(&buff);
 }
 google::protobuf::Message * ProtobufCodec::createMessage(const std::string & typeName)
 {

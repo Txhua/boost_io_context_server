@@ -30,6 +30,8 @@ public:
 	Buffer *outputBuffer() { return &outputBuffer_; }
 	void shutdown();
 	void send();
+	void send(Buffer *buf);
+	void sendInThisThread(const StringPiece &str);
 	boost::asio::executor getIoService() { return std::move(socket_.get_executor()); }
 private:
 	void readHeader();
