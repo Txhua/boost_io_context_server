@@ -151,6 +151,8 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Callbacks.h" />
     <ClInclude Include="Codec.h" />
+    <ClInclude Include="CurrentThread.h" />
+    <ClInclude Include="Dispatcher.h" />
     <ClInclude Include="IOContextThread.h" />
     <ClInclude Include="IOContextThreadPool.h" />
     <ClInclude Include="ProtobufCodec.h" />
@@ -163,6 +165,8 @@
     <ClCompile Include="Accept.cpp" />
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="Codec.cpp" />
+    <ClCompile Include="CurrentThread.cpp" />
+    <ClCompile Include="Dispatcher.cpp" />
     <ClCompile Include="IOContextThread.cpp" />
     <ClCompile Include="IOContextThreadPool.cpp" />
     <ClCompile Include="main.cpp" />
