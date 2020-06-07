@@ -40,7 +40,7 @@ void TcpConnection::send(Buffer * buf)
 	boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::sendInThisThread, shared_from_this(), buf->retrieveAllAsString()));
 }
 
-void TcpConnection::sendInThisThread(const StringPiece & str)
+void TcpConnection::sendInThisThread(const StringPiece &str)
 {
 	auto write_in_progress = (outputBuffer_.readableBytes() == 0) ? true : false;
 	outputBuffer_.append(str.data(), str.size());

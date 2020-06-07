@@ -8,10 +8,22 @@ namespace IOEvent
 
 namespace CurrentThread
 {
-extern thread_local std::thread::id t_thread_id;
+// internal
+extern thread_local std::thread::id cached_tid;
+extern thread_local const char* t_threadName;
 
-void cacheId();
-std::thread::id tid();
+void CacheTid();
+
+inline std::thread::id tid()
+{
+	if (cached_tid == std::thread::id())
+	{
+		CacheTid();
+	}
+	return cached_tid;
+}
+
+
 }
 
 }

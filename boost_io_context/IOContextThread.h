@@ -3,11 +3,7 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/executor_work_guard.hpp>
-#include <boost/noncopyable.hpp>
-#include <thread>
-#include <atomic>
-#include <mutex>
-#include <condition_variable>
+#include "Thread.h"
 
 namespace IOEvent
 {
@@ -24,7 +20,7 @@ private:
 	void threadFunc();
 private:
 	std::atomic<bool> started_;
-	std::thread thread_;
+	Thread thread_;
 	std::unique_ptr<io_context_work> work_;
 	std::unique_ptr<io_context> io_context_;
 	std::mutex mutex_;

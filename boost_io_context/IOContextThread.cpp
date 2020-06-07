@@ -7,7 +7,8 @@ namespace IOEvent
 IOContextThread::IOContextThread()
 	:started_(false),
 	io_context_(nullptr),
-	work_(nullptr)
+	work_(nullptr),
+	thread_(std::bind(&IOContextThread::threadFunc, this))
 {
 
 }
@@ -23,8 +24,9 @@ IOContextThread::~IOContextThread()
 io_context *IOContextThread::start()
 {
 	assert(!started_);
+	assert(!thread_.started());
 	started_ = true;
-	thread_ = std::move(std::thread(std::bind(&IOContextThread::threadFunc, this)));
+	thread_.start();
 	{
 		std::unique_lock<std::mutex> lock(mutex_);
 		while (!io_context_)

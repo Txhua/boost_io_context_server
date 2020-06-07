@@ -151,6 +151,7 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Callbacks.h" />
     <ClInclude Include="Codec.h" />
+    <ClInclude Include="CountDownLatch.h" />
     <ClInclude Include="CurrentThread.h" />
     <ClInclude Include="Dispatcher.h" />
     <ClInclude Include="IOContextThread.h" />
@@ -159,6 +160,7 @@
     <ClInclude Include="StringPiece.h" />
     <ClInclude Include="TcpConnection.h" />
     <ClInclude Include="TcpServer.h" />
+    <ClInclude Include="Thread.h" />
     <ClInclude Include="Types.h" />
   </ItemGroup>
   <ItemGroup>
@@ -173,6 +175,7 @@
     <ClCompile Include="ProtobufCodec.cpp" />
     <ClCompile Include="TcpConnection.cpp" />
     <ClCompile Include="TcpServer.cpp" />
+    <ClCompile Include="Thread.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
