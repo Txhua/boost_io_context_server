@@ -48,7 +48,7 @@ public:
 	void registerMessageCallback(const typename CallbackT<_Type>::ProtobufMessageCallback &callback)
 	{
 		std::shared_ptr<CallbackT<_Type>> f = std::make_shared<CallbackT<_Type>>(callback);
-		callbacks_[_Type::descriptor] = f;
+		callbacks_[_Type::descriptor()] = f;
 	}
 
 	void onMessage(const TcpConnectionPtr &conn, const MessagePtr &message)
