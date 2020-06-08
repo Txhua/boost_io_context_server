@@ -108,7 +108,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>F:\MSVC\zlib\lib\Debug;F:\MSVC\protobuf\lib;F:\MSVC\glog\lib\Debug;F:\MSVC\boost\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>F:\MSVC\zlib\lib\Debug;F:\MSVC\protobuf\lib\Debug;F:\MSVC\glog\lib\Debug;F:\MSVC\boost\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>gflags_debug.lib;glogd.lib;libprotobufd.lib;zlibd.lib;libboost_date_time-vc141-mt-sgd-x64-1_73.lib;libboost_regex-vc141-mt-sgd-x64-1_73.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -157,6 +157,7 @@
     <ClInclude Include="IOContextThread.h" />
     <ClInclude Include="IOContextThreadPool.h" />
     <ClInclude Include="ProtobufCodec.h" />
+    <ClInclude Include="query.pb.h" />
     <ClInclude Include="StringPiece.h" />
     <ClInclude Include="TcpConnection.h" />
     <ClInclude Include="TcpServer.h" />
@@ -173,6 +174,7 @@
     <ClCompile Include="IOContextThreadPool.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ProtobufCodec.cpp" />
+    <ClCompile Include="query.pb.cc" />
     <ClCompile Include="TcpConnection.cpp" />
     <ClCompile Include="TcpServer.cpp" />
     <ClCompile Include="Thread.cpp" />

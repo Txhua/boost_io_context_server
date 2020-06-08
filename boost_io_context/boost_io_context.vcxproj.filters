@@ -60,6 +60,9 @@
     <ClInclude Include="CountDownLatch.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="query.pb.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Accept.cpp">
@@ -96,6 +99,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Thread.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="query.pb.cc">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

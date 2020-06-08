@@ -2,6 +2,15 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <glog/logging.h>
+#include "Dispatcher.h"
+#include "ProtobufCodec.h"
+#include "TcpConnection.h"
+#include "query.pb.h"
+
+using namespace IOEvent;
+
+using QueryPtr = std::shared_ptr<QueryDef::Query> ;
+using AnswerPtr = std::shared_ptr<QueryDef::Answer>;
 
 void InitGlog()
 {
@@ -34,6 +43,66 @@ void InitGlog()
 	//google::InstallFailureWriter(&SignalHandle); 
 }
 
+class QueryServer
+{
+public:
+	QueryServer(boost::asio::io_context &ios,
+		const boost::asio::ip::tcp::endpoint &endpoint)
+		: server_(ios, endpoint),
+		dispatcher_(std::bind(&QueryServer::onUnknownMessage, this, std::placeholders::_1, std::placeholders::_2)),
+		codec_(std::bind(&Dispatcher::onMessage, &dispatcher_, std::placeholders::_1, std::placeholders::_2))
+	{
+		dispatcher_.registerMessageCallback<QueryDef::Query>(
+			std::bind(&QueryServer::onQuery, this, std::placeholders::_1, std::placeholders::_2));
+		dispatcher_.registerMessageCallback<QueryDef::Answer>(
+			std::bind(&QueryServer::onAnswer, this, std::placeholders::_1, std::placeholders::_2));
+		server_.setConnectionCallback(
+			std::bind(&QueryServer::onConnection, this, std::placeholders::_1));
+		server_.setMessageCallback(
+			std::bind(&ProtobufCodec::onMessage, &codec_, std::placeholders::_1, std::placeholders::_2));
+	}
+
+	void start()
+	{
+		server_.setThreadNum(5);
+		server_.start();
+	}
+
+private:
+	void onConnection(const TcpConnectionPtr& conn)
+	{
+		LOG(INFO) << conn->localAddr().address().to_string() << " -> "
+			<< conn->remoteAddr().address().to_string();
+	}
+
+	void onUnknownMessage(const TcpConnectionPtr& conn,const MessagePtr& message)
+	{
+		LOG(INFO) << "onUnknownMessage: " << message->GetTypeName();
+		conn->shutdown();
+	}
+
+	void onQuery(const TcpConnectionPtr& conn,const QueryPtr& message)
+	{
+		LOG(INFO) << "onQuery: " << message->GetTypeName() << message->DebugString();
+		QueryDef::Answer answer;
+		answer.set_id(1);
+		answer.set_questioner("Txhua");
+		answer.set_answerer("boost.org");
+		codec_.send(conn, &answer);
+		conn->shutdown();
+	}
+
+	void onAnswer(const TcpConnectionPtr& conn,const AnswerPtr& message)
+	{
+		LOG(INFO) << "onAnswer: " << message->GetTypeName();
+		conn->shutdown();
+	}
+
+	IOEvent::TcpServer server_;
+	Dispatcher dispatcher_;
+	ProtobufCodec codec_;
+};
+
 int main(int argc, char* argv[])
 {
 	try
@@ -43,8 +112,10 @@ int main(int argc, char* argv[])
 		boost::asio::io_context io_context;
 		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work(boost::asio::make_work_guard(io_context));
 		boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string("127.0.0.1"), 8888);
-		IOEvent::TcpServer s(io_context, ep);
-		s.setThreadNum(5);
+		//IOEvent::TcpServer s(io_context, ep);
+		//s.setThreadNum(5);
+		//s.start();
+		QueryServer s(io_context, ep);
 		s.start();
 		io_context.run();
 		google::ShutdownGoogleLogging();

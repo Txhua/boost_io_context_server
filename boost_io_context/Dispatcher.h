@@ -3,79 +3,81 @@
 
 #include <boost/noncopyable.hpp>
 #include <google/protobuf/message.h>
+#include <google/protobuf/descriptor.h>
 #include <map>
 #include "Callbacks.h"
 #include "Types.h"
 
 namespace IOEvent
 {
-using MessagePtr = std::shared_ptr<google::protobuf::Message>;
-class Callback : public boost::noncopyable
+using MessagePtr = std::shared_ptr<google::protobuf::Message> ;
+
+class Callback
 {
 public:
 	virtual ~Callback() = default;
-	virtual void onMessage(const TcpConnectionPtr &conn, const MessagePtr &message) const = 0;
+	virtual void onMessage(const TcpConnectionPtr&,const MessagePtr& message) const = 0;
 };
 
-template <typename _Type>
+template <typename T>
 class CallbackT : public Callback
 {
+	static_assert(std::is_base_of<google::protobuf::Message, T>::value,"T must be derived from gpb::Message.");
 public:
-	using ProtobufMessageCallback = std::function<void(const TcpConnectionPtr &conn, const std::shared_ptr<_Type>&)>;
-	CallbackT(ProtobufMessageCallback cb)
-		:protobufMessageCallback_(std::move(cb))
-	{}
+	using ProtobufMessageTCallback = std::function<void(const TcpConnectionPtr&,const std::shared_ptr<T>& message)>;
 
-	void onMessage(const TcpConnectionPtr &conn, const MessagePtr &message) const override
+	CallbackT(const ProtobufMessageTCallback& callback)
+		: callback_(callback)
 	{
-		std::shared_ptr<_Type> concrete = down_pointer_cast<_Type>(message);
-		assert(concrete);
-		protobufMessageCallback_(conn, concrete);
 	}
+	void onMessage(const TcpConnectionPtr& conn,const MessagePtr& message) const override
+	{
+		std::shared_ptr<T> concrete = down_pointer_cast<T>(message);
+		assert(concrete != nullptr);
+		callback_(conn, concrete);
+	}
+
 private:
-	ProtobufMessageCallback protobufMessageCallback_;
+	ProtobufMessageTCallback callback_;
 };
 
 class Dispatcher
 {
 public:
-	using ProtobufMessageCallback = std::function<void(const TcpConnectionPtr &conn, const MessagePtr&)>;
-	Dispatcher(ProtobufMessageCallback cb)
-		:defaultCallback_(std::move(cb))
-	{}
+	using ProtobufMessageCallback = std::function<void(const TcpConnectionPtr&,const MessagePtr& message)>;
 
-	template <typename _Type>
-	void registerMessageCallback(const typename CallbackT<_Type>::ProtobufMessageCallback &callback)
+	explicit Dispatcher(const ProtobufMessageCallback& defaultCb)
+		: defaultCallback_(defaultCb)
 	{
-		std::shared_ptr<CallbackT<_Type>> f = std::make_shared<CallbackT<_Type>>(callback);
-		callbacks_[_Type::descriptor()] = f;
 	}
 
-	void onMessage(const TcpConnectionPtr &conn, const MessagePtr &message)
+	void onMessage(const TcpConnectionPtr& conn,const MessagePtr& message) const
 	{
-		auto iter = callbacks_.find(message->GetDescriptor());
-		if (iter != callbacks_.end())
+		CallbackMap::const_iterator it = callbacks_.find(message->GetDescriptor());
+		if (it != callbacks_.end())
 		{
-			iter->second->onMessage(conn, message);
+			it->second->onMessage(conn, message);
 		}
 		else
 		{
 			defaultCallback_(conn, message);
 		}
 	}
+
+	template<typename T>
+	void registerMessageCallback(const typename CallbackT<T>::ProtobufMessageTCallback& callback)
+	{
+		std::shared_ptr<CallbackT<T> > pd(new CallbackT<T>(callback));
+		callbacks_[T::descriptor()] = pd;
+	}
+
 private:
-	std::map<const google::protobuf::Descriptor *, std::shared_ptr<Callback>> callbacks_;
+	using CallbackMap = std::map<const google::protobuf::Descriptor*, std::shared_ptr<Callback>>;
+
+	CallbackMap callbacks_;
 	ProtobufMessageCallback defaultCallback_;
 };
-
-
 }
-
-
-
-
-
-
 
 
 #endif // !_IOEVENT_DISPATCHER_H

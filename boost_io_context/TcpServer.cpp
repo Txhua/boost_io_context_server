@@ -6,7 +6,8 @@
 namespace IOEvent
 {
 TcpServer::TcpServer(io_context & ios, const ip::tcp::endpoint & endpoint)
-	:accept_(std::make_unique<Acceptor>(ios, endpoint)),
+	:baseIoContext_(ios),
+	accept_(std::make_unique<Acceptor>(ios, endpoint)),
 	started_(false),
 	ipPort_(endpoint.address().to_string()),
 	nextConnId_(1)
@@ -36,8 +37,16 @@ void TcpServer::setThreadNum(int numThreads)
 
 void TcpServer::removeConnection(const TcpConnectionPtr& conn)
 {
-	LOG(INFO) << "disconnection : " << conn->name();
-	connections_.erase(conn->name());
+	boost::asio::post(baseIoContext_, std::bind(&TcpServer::removeConnectionInThisThread, this, conn));
+}
+
+void TcpServer::removeConnectionInThisThread(const TcpConnectionPtr & conn)
+{
+	LOG(INFO) << "TcpServer::removeConnectionInThisThread : " << conn->name();
+	size_t n = connections_.erase(conn->name());
+	(void)n;
+	assert(n == 1);
+	boost::asio::post(conn->getIoService(), std::bind(&TcpConnection::connectDestroyed, conn));
 }
 
 void TcpServer::newConnection(ip::tcp::socket && socket)

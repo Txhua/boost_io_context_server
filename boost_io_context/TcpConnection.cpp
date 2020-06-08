@@ -9,7 +9,8 @@ namespace IOEvent
 {
 TcpConnection::TcpConnection(ip::tcp::socket&& socket, const std::string& name)
 	:socket_(std::move(socket)),	
-	name_(name)
+	name_(name),
+	state_(kConnecting)
 {
 	socket_.set_option(ip::tcp::no_delay(true));
 }
@@ -21,27 +22,55 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::connectEstablished()
 {
+	assert(state_ == kConnecting);
+	setState(kConnected);
 	if (connectionCallback_) connectionCallback_(shared_from_this());
 	readHeader();
 }
 
-void TcpConnection::shutdown()
+void TcpConnection::connectDestroyed()
 {
-	boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::shutdownInThisThread, shared_from_this()));
+	if (state_ == kConnected)
+	{
+		setState(kDisconnected);
+		connectionCallback_(shared_from_this());
+	}
 }
 
-void TcpConnection::send()
+void TcpConnection::shutdown()
 {
-	boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::write, shared_from_this()));
+	if (state_ == kConnected)
+	{
+		setState(kDisconnecting);
+		boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::shutdownInThisThread, shared_from_this()));
+	}
 }
+
 
 void TcpConnection::send(Buffer * buf)
 {
-	boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::sendInThisThread, shared_from_this(), buf->retrieveAllAsString()));
+	if (state_ == kConnected)
+	{
+		boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::sendInThisThread, shared_from_this(), buf->retrieveAllAsString()));
+	}
 }
+
+void TcpConnection::send(std::string &&message)
+{
+	if (state_ == kConnected)
+	{
+		boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::sendInThisThread, shared_from_this(), std::forward<StringPiece>(message)));
+	}
+}
+
 
 void TcpConnection::sendInThisThread(const StringPiece &str)
 {
+	if (state_ == kDisconnected)
+	{
+		LOG(WARNING) << "disconnected, give up writing";
+		return;
+	}
 	auto write_in_progress = (outputBuffer_.readableBytes() == 0) ? true : false;
 	outputBuffer_.append(str.data(), str.size());
 	if (write_in_progress)
@@ -52,7 +81,20 @@ void TcpConnection::sendInThisThread(const StringPiece &str)
 
 void TcpConnection::shutdownInThisThread()
 {
-	socket_.shutdown(socket_base::shutdown_type::shutdown_send);
+	if (outputBuffer_.readableBytes() == 0)
+	{
+		// 确保缓冲区的数据已被发送完
+		socket_.shutdown(socket_base::shutdown_type::shutdown_send);
+	}
+}
+
+void TcpConnection::handleClose()
+{
+	assert(state_ == kConnected || state_ == kDisconnecting);
+	setState(kDisconnected);
+	TcpConnectionPtr guardThis(shared_from_this());
+	if(connectionCallback_) connectionCallback_(guardThis);
+	if(closeCallback_) closeCallback_(guardThis);
 }
 
 void TcpConnection::readHeader()
@@ -63,30 +105,27 @@ void TcpConnection::readHeader()
 		if (error)
 		{
 			LOG(WARNING) << "readHeader() error! " << name_ << " error message: " << error.message();
-			shutdownInThisThread();
-			closeCallback_(shared_from_this());
+			handleClose();
 		}
 		else
 		{
 			inputBuffer_.hasWritten(byte);
 			auto len = inputBuffer_.peekInt32();
 			inputBuffer_.ensureWritableBytes(len);
-			readBody();
+			readBody(len);
 		}
 	});
 }
 
-void TcpConnection::readBody()
+void TcpConnection::readBody(size_t len)
 {
 	auto self(shared_from_this());
-	auto len = inputBuffer_.peekInt32();
 	boost::asio::async_read(socket_, boost::asio::buffer(inputBuffer_.beginWrite(), len), [this, self](const boost::system::error_code &error, size_t byte)
 	{
 		if (error)
 		{
 			LOG(WARNING) << "readBody() error! " << name_ << " error message: " << error.message();
-			shutdownInThisThread();
-			closeCallback_(shared_from_this());
+			handleClose();
 		}
 		else
 		{
@@ -110,12 +149,26 @@ void TcpConnection::write()
 			{
 				write();
 			}
+			else
+			{
+				if (state_ == kDisconnecting)
+				{
+					shutdownInThisThread();
+				}
+			}
 		}
 		else
 		{
-			shutdownInThisThread();
-			outputBuffer_.retrieveAll();
-			closeCallback_(shared_from_this());
+			// boost::system::errc::operation_would_block 对方的缓冲区可能已被写满,不是真正的错误
+			if (error != boost::system::errc::operation_would_block)
+			{
+				LOG(ERROR) << "TcpConnection::write";
+				// socket已断开连接
+				if (error == boost::system::errc::connection_reset || error == boost::system::errc::broken_pipe)
+				{
+					LOG(ERROR) << "TcpConnection socket unlink";
+				}
+			}
 		}
 	});
 }

@@ -24,22 +24,31 @@ public:
 	void setMessageCallback(MessageCallback cb) { messageCallback_ = std::move(cb); }
 	void setWriteCompleteCallback(WriteCompleteCallback cb) { writeCompleteCallback_ = std::move(cb); }
 	void setCloseCallback(CloseCallback cb) { closeCallback_ = std::move(cb); }
+	// 当有新的连接到来时被调用(只能被调用一次)
 	void connectEstablished();
+	// 被TcpServer移除时调用(只能被调用一次)
+	void connectDestroyed(); 
+	bool connected()const { return state_ == kConnected; }
 	const std::string &name()const { return name_; }
 	Buffer *inputBuffer() { return &inputBuffer_; }
 	Buffer *outputBuffer() { return &outputBuffer_; }
+	// 断开连接
 	void shutdown();
-	void send();
 	void send(Buffer *buf);
-	void sendInThisThread(const StringPiece &str);
+	void send(std::string &&message);
 	boost::asio::executor getIoService() { return std::move(socket_.get_executor()); }
 private:
+	enum StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
+	void sendInThisThread(const StringPiece &str);
 	void readHeader();
-	void readBody();
+	void readBody(size_t len);
 	void write();
 	void shutdownInThisThread();
+	void setState(StateE s) { state_ = s; }
+	void handleClose();
 private:
 	const std::string name_;
+	StateE state_;
 	ip::tcp::socket socket_;
 	Buffer inputBuffer_;
 	Buffer outputBuffer_;

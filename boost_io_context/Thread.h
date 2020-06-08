@@ -19,7 +19,7 @@ public:
 	void start();
 	void join();
 	std::string name()const { return name_; }
-	bool join()const { return join_; }
+	bool joined()const { return join_; }
 	bool started()const { return started_; }
 	std::thread::id tid()const { return tid_; }
 private:

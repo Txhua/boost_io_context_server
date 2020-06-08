@@ -25,8 +25,10 @@ public:
 	void setThreadNum(int numThreads);
 private:
 	void removeConnection(const TcpConnectionPtr &conn);
+	void removeConnectionInThisThread(const TcpConnectionPtr &conn);
 	void newConnection(ip::tcp::socket &&socket);
 private:
+	io_context &baseIoContext_;
 	uint32_t nextConnId_;
 	const std::string ipPort_;
 	std::atomic<bool> started_;
