@@ -8,11 +8,12 @@ namespace IOEvent
 {
 class TcpConnection;
 class Buffer;
+using TimerCallback = std::function<void()>;
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
-typedef std::function<void(const TcpConnectionPtr&)> ConnectionCallback;
-typedef std::function<void(const TcpConnectionPtr&)> CloseCallback;
-typedef std::function<void(const TcpConnectionPtr&)> WriteCompleteCallback;
-typedef std::function<void(const TcpConnectionPtr&, Buffer *)> MessageCallback;
+using ConnectionCallback = std::function<void(const TcpConnectionPtr&)>;
+using CloseCallback = std::function<void(const TcpConnectionPtr&)>;
+using WriteCompleteCallback = std::function<void(const TcpConnectionPtr&)>;
+using MessageCallback = std::function<void(const TcpConnectionPtr&, Buffer *)>;
 }
 
 

@@ -168,11 +168,11 @@ void TcpConnection::write()
 			// boost::system::errc::operation_would_block 对方的缓冲区可能已被写满,不是真正的错误
 			if (error != boost::system::errc::operation_would_block)
 			{
-				LOG(ERROR) << "TcpConnection::write";
+				LOG(ERROR) << "TcpConnection::write" << name_;
 				// socket已断开连接
 				if (error == boost::system::errc::connection_reset || error == boost::system::errc::broken_pipe)
 				{
-					LOG(ERROR) << "TcpConnection socket unlink";
+					LOG(ERROR) << "TcpConnection socket unlink" << name_;
 				}
 			}
 		}
