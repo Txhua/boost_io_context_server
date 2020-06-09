@@ -1,4 +1,4 @@
-#include "ProtobufCodec.h"
+Ôªø#include "ProtobufCodec.h"
 #include <google/protobuf/message.h>
 #include "Buffer.h"
 #include "TcpConnection.h"
@@ -45,7 +45,7 @@ void ProtobufCodec::send(const TcpConnectionPtr & conn, google::protobuf::Messag
 	buff.ensureWritableBytes(byteSize);
 	uint8_t *start = reinterpret_cast<uint8_t *>(buff.beginWrite());
 	uint8_t *end = message->SerializeWithCachedSizesToArray(start);
-	if (start - end != byteSize)
+	if (end - start != byteSize)
 	{
 		LOG(FATAL) << "google SerializeWithCachedSizesToArray error";
 	}
@@ -54,7 +54,7 @@ void ProtobufCodec::send(const TcpConnectionPtr & conn, google::protobuf::Messag
 	buff.appendInt32(checkSum);
 	assert(buff.readableBytes() == sizeof(nameLen) + nameLen + byteSize + sizeof(checkSum));
 	int32_t len = boost::asio::detail::socket_ops::host_to_network_long(static_cast<int32_t>(buff.readableBytes()));
-	buff.prepend(&len, sizeof(len));	
+	buff.prepend(&len, sizeof(len));
 	conn->send(&buff);
 }
 google::protobuf::Message * ProtobufCodec::createMessage(const std::string & typeName)
@@ -74,7 +74,7 @@ google::protobuf::Message * ProtobufCodec::createMessage(const std::string & typ
 MessagePtr ProtobufCodec::parse(const char * data, size_t len)
 {
 	MessagePtr message;
-	// ºÏ≤‚–£—ÈŒª
+	// Ê£ÄÊµãÊ†°È™å‰Ωç
 	int32_t expectedCheckSum = networkToHost32(data + len - kHeaderLen);
 	int32_t checkSum = static_cast<int32_t>(::adler32(1, reinterpret_cast<const Bytef *>(data), static_cast<int>(len - kHeaderLen)));
 	if (checkSum == expectedCheckSum)

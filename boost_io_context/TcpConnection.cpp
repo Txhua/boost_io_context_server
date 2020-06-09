@@ -8,7 +8,7 @@
 namespace IOEvent
 {
 TcpConnection::TcpConnection(ip::tcp::socket&& socket, const std::string& name)
-	:socket_(std::move(socket)),	
+	:socket_(std::move(socket)),
 	name_(name),
 	state_(kConnecting)
 {
@@ -17,6 +17,7 @@ TcpConnection::TcpConnection(ip::tcp::socket&& socket, const std::string& name)
 
 TcpConnection::~TcpConnection()
 {
+	LOG(INFO) << "TcpConnection::~TcpConnection name: " << name_;
 	socket_.close();
 }
 
@@ -84,7 +85,12 @@ void TcpConnection::shutdownInThisThread()
 	if (outputBuffer_.readableBytes() == 0)
 	{
 		// 确保缓冲区的数据已被发送完
-		socket_.shutdown(socket_base::shutdown_type::shutdown_send);
+		boost::system::error_code error;
+		socket_.shutdown(socket_base::shutdown_type::shutdown_send, error);
+		if (error)
+		{
+			LOG(ERROR) << "socket_.shutdown, error message : " << error.message();
+		}
 	}
 }
 
@@ -93,8 +99,8 @@ void TcpConnection::handleClose()
 	assert(state_ == kConnected || state_ == kDisconnecting);
 	setState(kDisconnected);
 	TcpConnectionPtr guardThis(shared_from_this());
-	if(connectionCallback_) connectionCallback_(guardThis);
-	if(closeCallback_) closeCallback_(guardThis);
+	if (connectionCallback_) connectionCallback_(guardThis);
+	if (closeCallback_) closeCallback_(guardThis);
 }
 
 void TcpConnection::readHeader()
