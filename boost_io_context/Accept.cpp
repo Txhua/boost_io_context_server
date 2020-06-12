@@ -1,14 +1,14 @@
 ﻿#include "Accept.h"
 #include <boost/system/error_code.hpp>
 #include <iostream>
-#include "IOContextThreadPool.h"
+#include "IOLoopThreadPool.h"
 #include <glog/logging.h>
+#include "IOLoop.h"
 namespace IOEvent
 {
-Acceptor::Acceptor(io_context & ios, const Endpoint & endpoint)
-	:accept_(ios, endpoint),
-	socket_(ios),
-	ioContextPool_(std::make_unique<IOContextThreadPool>(ios))
+Acceptor::Acceptor(IOLoop *loop, const Endpoint & endpoint)
+	:loop_(loop),
+	accept_(*loop->getContext(), endpoint)
 {
 }
 
@@ -22,32 +22,44 @@ void Acceptor::setNewConnectCallback(NewConnectCallback cb)
 	newConnectCallback_ = std::move(cb);
 }
 
-void Acceptor::setThreadNum(int numThreads)
-{
-	ioContextPool_->setThreadNum(numThreads);
-}
+//void Acceptor::accept()
+//{
+//	accept_.async_accept(socket_, [&](const boost::system::error_code &error)
+//	{
+//		if (!error)
+//		{
+//			if (newConnectCallback_) newConnectCallback_(std::move(socket_));
+//			else socket_.close();
+//		}
+//		else
+//		{
+//			LOG(WARNING) << "accept failed! " << error.message();
+//			socket_.close();
+//		}
+//		accept();
+//	});
+//	socket_ = ip::tcp::socket(*threadPool_->getNextIOContext());
+//}
 
 void Acceptor::accept()
 {
-	accept_.async_accept(socket_, [&](const boost::system::error_code &error)
+	accept_.async_accept([&](const boost::system::error_code &error, ip::tcp::socket &&socket)
 	{
 		if (!error)
 		{
-			if (newConnectCallback_) newConnectCallback_(std::move(socket_));
-			else socket_.close();
+			if (newConnectCallback_) newConnectCallback_(std::move(socket));
+			else socket.close();
 		}
 		else
 		{
 			LOG(WARNING) << "accept failed! " << error.message();
-			socket_.close();
+			socket.close();
 		}
 		accept();
 	});
-	socket_ = ip::tcp::socket(*ioContextPool_->getNextIOContext());
 }
 void Acceptor::start()
 {
-	ioContextPool_->run();
 	accept();
 }
 }

@@ -1,8 +1,8 @@
 #ifndef _IOEVENT_TIMER_QUEUE_H
 #define _IOEVENT_TIMER_QUEUE_H
 
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/noncopyable.hpp>
 #include <set>
 #include <vector>
 #include <atomic>
@@ -14,10 +14,11 @@ namespace IOEvent
 {
 using namespace boost::asio;
 class Timer;
-class TimerQueue
+class IOLoop;
+class TimerQueue final : public boost::noncopyable
 {
 public:
-	explicit TimerQueue(io_context &ios);
+	explicit TimerQueue(IOLoop *loop);
 	~TimerQueue();
 	TimerId addTimer(TimerCallback cb, const Timestamp &when, double interval);
 	void cancel(TimerId timerId);
@@ -35,7 +36,7 @@ private:
 	std::vector<Entry> getExpired(const Timestamp &now);
 	void reset(const std::vector<Entry> &expired, const Timestamp &now);
 private:
-	io_context &baseIoContext_;
+	IOLoop *baseLoop_;
 	steady_timer steadyTimer_;
 	TimerList timers_;
 	ActiveTimerSet activeTimers_;

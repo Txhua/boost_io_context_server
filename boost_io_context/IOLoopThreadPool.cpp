@@ -1,12 +1,13 @@
-﻿#include "IOContextThreadPool.h"
-#include "IOContextThread.h"
+﻿#include "IOLoopThreadPool.h"
+#include "IOLoopThread.h"
+#include "IOLoop.h"
 #include <cassert>
 
 namespace IOEvent
 {
 
-IOContextThreadPool::IOContextThreadPool(io_context &ios)
-	:baseIoContext_(&ios),
+IOLoopThreadPool::IOLoopThreadPool(IOLoop *loop)
+	:baseLoop_(loop),
 	started_(false),
 	numThreads_(0),
 	next_(0)
@@ -14,7 +15,7 @@ IOContextThreadPool::IOContextThreadPool(io_context &ios)
 
 }
 
-IOContextThreadPool::~IOContextThreadPool()
+IOLoopThreadPool::~IOLoopThreadPool()
 {
 	for (auto &ios : threads_)
 	{
@@ -22,25 +23,25 @@ IOContextThreadPool::~IOContextThreadPool()
 	}
 }
 
-void IOContextThreadPool::run()
+void IOLoopThreadPool::run()
 {
 	assert(!started_);
 	started_ = true;
 	for (uint32_t i = 0; i < numThreads_; ++i)
 	{
-		IOContextThread *iosThread = new IOContextThread();
-		threads_.push_back(std::unique_ptr<IOContextThread>(iosThread));
-		auto *iosPtr = iosThread->start();
+		IOLoopThread *loopThread = new IOLoopThread();
+		threads_.push_back(std::unique_ptr<IOLoopThread>(loopThread));
+		auto *iosPtr = loopThread->start();
 		assert(iosPtr != nullptr);
 		io_contexts_.push_back(iosPtr);
 	}
 }
 
 
-io_context * IOContextThreadPool::getNextIOContext()
+IOLoop * IOLoopThreadPool::getNextIOLoop()
 {
 	assert(started_);
-	io_context* ios = baseIoContext_;
+	IOLoop* ios = baseLoop_;
 	if (!io_contexts_.empty())
 	{
 		// round-robin
@@ -54,12 +55,12 @@ io_context * IOContextThreadPool::getNextIOContext()
 	return ios;
 }
 
-std::vector<io_context*> IOContextThreadPool::getAllIOContext()
+std::vector<IOLoop*> IOLoopThreadPool::getAllIOContext()
 {
 	assert(started_);
 	if (io_contexts_.empty())
 	{
-		return std::vector<io_context*>(1, baseIoContext_);
+		return std::vector<IOLoop*>(1, baseLoop_);
 	}
 	else
 	{

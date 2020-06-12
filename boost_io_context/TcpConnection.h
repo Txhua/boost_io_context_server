@@ -11,12 +11,13 @@
 namespace IOEvent
 {
 using namespace boost::asio;
+class IOLoop;
 class TcpConnection final
 	: public std::enable_shared_from_this<TcpConnection>,
 	public boost::noncopyable
 {
 public:
-	TcpConnection(ip::tcp::socket &&socket, const std::string &name);
+	explicit TcpConnection(IOLoop *loop, ip::tcp::socket &&socket, const std::string &name);
 	~TcpConnection();
 	ip::tcp::endpoint localAddr() const { return socket_.local_endpoint(); }
 	ip::tcp::endpoint remoteAddr()const { return socket_.remote_endpoint(); }
@@ -36,7 +37,7 @@ public:
 	void shutdown();
 	void send(Buffer *buf);
 	void send(std::string &&message);
-	boost::asio::executor getIoService() { return std::move(socket_.get_executor()); }
+	IOLoop *getLoop() { return loop_; }
 private:
 	enum StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
 	void sendInThisThread(const StringPiece &str);
@@ -47,6 +48,7 @@ private:
 	void setState(StateE s) { state_ = s; }
 	void handleClose();
 private:
+	IOLoop *loop_;
 	const std::string name_;
 	StateE state_;
 	ip::tcp::socket socket_;

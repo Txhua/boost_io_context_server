@@ -1,13 +1,14 @@
 #include "TimerQueue.h"
 #include "Timer.h"
+#include "IOLoop.h"
 #include <boost/asio/post.hpp>
 #include <cassert>
 
 namespace IOEvent
 {
-TimerQueue::TimerQueue(io_context & ios)
-	:baseIoContext_(ios),
-	steadyTimer_(baseIoContext_),
+TimerQueue::TimerQueue(IOLoop *loop)
+	:baseLoop_(loop),
+	steadyTimer_(*baseLoop_->getContext()),
 	timers_(),
 	callingExpiredTimers_(false)
 {
@@ -25,12 +26,12 @@ TimerQueue::~TimerQueue()
 TimerId TimerQueue::addTimer(TimerCallback cb, const Timestamp & when, double interval)
 {
 	auto *timer = new Timer(std::move(cb), when, interval);
-	boost::asio::post(baseIoContext_, std::bind(&TimerQueue::addTimerInThisThread, this, timer));
+	boost::asio::post(*baseLoop_->getContext(), std::bind(&TimerQueue::addTimerInThisThread, this, timer));
 	return TimerId(timer, timer->sequence());
 }
 void TimerQueue::cancel(TimerId timerId)
 {
-	boost::asio::post(baseIoContext_, std::bind(&TimerQueue::cancelInThisThread, this, timerId));
+	boost::asio::post(*baseLoop_->getContext(), std::bind(&TimerQueue::cancelInThisThread, this, timerId));
 }
 
 void TimerQueue::addTimerInThisThread(Timer * timer)
@@ -129,9 +130,9 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(const Timestamp & now)
 	// 删除过期的时间
 	timers_.erase(timers_.begin(), end);
 	// 删除过期的活动时间
-	for (auto &entry : expired)
+	for (auto &exp : expired)
 	{
-		ActiveTimer timer(entry.second, entry.second->sequence());
+		ActiveTimer timer(exp.second, exp.second->sequence());
 		size_t n = activeTimers_.erase(timer);
 		assert(n == 1); (void)n;
 	}

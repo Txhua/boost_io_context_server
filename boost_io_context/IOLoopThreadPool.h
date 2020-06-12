@@ -8,22 +8,25 @@
 
 namespace IOEvent
 {
-class IOContextThread;
 using namespace boost::asio;
-class IOContextThreadPool final : public boost::noncopyable
+class IOLoopThread;
+class IOLoop;
+class IOLoopThreadPool final : public boost::noncopyable
 {
 public:
-	IOContextThreadPool(io_context &ios);
-	~IOContextThreadPool();
+	IOLoopThreadPool(IOLoop *loop);
+	~IOLoopThreadPool();
 	void setThreadNum(int numThreads) { numThreads_ = numThreads; }
-	io_context * getNextIOContext();
-	std::vector<io_context *> getAllIOContext();
+	IOLoop *getNextIOLoop();
+	IOLoop *currentLoop() { return currentLoop_; }
+	std::vector<IOLoop *> getAllIOContext();
 	bool started() const { return started_; }
 	void run();
 private:
-	io_context *baseIoContext_;
-	std::vector<std::unique_ptr<IOContextThread>> threads_;
-	std::vector<io_context *> io_contexts_;
+	IOLoop *baseLoop_;
+	IOLoop *currentLoop_;
+	std::vector<std::unique_ptr<IOLoopThread>> threads_;
+	std::vector<IOLoop *> io_contexts_;
 	uint32_t next_;
 	std::atomic<bool> started_;
 	uint32_t numThreads_;

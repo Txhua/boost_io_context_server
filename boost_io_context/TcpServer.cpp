@@ -1,13 +1,17 @@
 ﻿#include "TcpServer.h"
 #include "Accept.h"
+#include "IOLoop.h"
 #include "TcpConnection.h"
+#include "IOLoopThreadPool.h"
 #include <glog/logging.h>
 #include <functional>
+
 namespace IOEvent
 {
-TcpServer::TcpServer(io_context & ios, const ip::tcp::endpoint & endpoint)
-	:baseIoContext_(ios),
-	accept_(std::make_unique<Acceptor>(ios, endpoint)),
+TcpServer::TcpServer(IOLoop *loop, const ip::tcp::endpoint & endpoint)
+	:baseLoop_(loop),
+	accept_(std::make_unique<Acceptor>(loop, endpoint)),
+	threadPool_(std::make_shared<IOLoopThreadPool>(loop)),
 	started_(false),
 	ipPort_(endpoint.address().to_string()),
 	nextConnId_(1)
@@ -17,52 +21,64 @@ TcpServer::TcpServer(io_context & ios, const ip::tcp::endpoint & endpoint)
 
 TcpServer::~TcpServer()
 {
-	LOG(WARNING) << "server exit" << this;
+	baseLoop_->assertInLoopThread();
+	LOG(WARNING) << "server exit :" << this;
+	for (auto &item : connections_)
+	{
+		TcpConnectionPtr conn(item.second);
+		item.second.reset();
+		conn->getLoop()->dispatch(std::bind(&TcpConnection::connectDestroyed, conn));
+	}
 }
 
 void TcpServer::start()
 {
-	if (!started_.load(std::memory_order_acquire))
+	if (!started_)
 	{
-		LOG(INFO) << "server start";
-		started_.store(true, std::memory_order_release);
+		LOG(INFO) << "server start ";
+		started_ = true;
+		threadPool_->run();
 		accept_->start();
 	}
 }
 
 void TcpServer::setThreadNum(int numThreads)
 {
-	accept_->setThreadNum(numThreads);
+	threadPool_->setThreadNum(numThreads);
 }
 
 void TcpServer::removeConnection(const TcpConnectionPtr& conn)
 {
-	boost::asio::post(baseIoContext_, std::bind(&TcpServer::removeConnectionInThisThread, this, conn));
+	baseLoop_->dispatch(std::bind(&TcpServer::removeConnectionInThisThread, this, conn));
 }
 
 void TcpServer::removeConnectionInThisThread(const TcpConnectionPtr & conn)
 {
+	baseLoop_->assertInLoopThread();
 	LOG(INFO) << "TcpServer::removeConnectionInThisThread : " << conn->name();
 	size_t n = connections_.erase(conn->name());
 	(void)n;
 	assert(n == 1);
-	boost::asio::post(conn->getIoService(), std::bind(&TcpConnection::connectDestroyed, conn));
+	auto *ioLoop = conn->getLoop();
+	ioLoop->post(std::bind(&TcpConnection::connectDestroyed, conn));
 }
 
 void TcpServer::newConnection(ip::tcp::socket && socket)
 {
+	baseLoop_->assertInLoopThread();
 	char buf[64];
+	auto *ioLoop = threadPool_->getNextIOLoop();
+	ip::tcp::socket peerSocket(*ioLoop->getContext());
+	peerSocket.assign(ip::tcp::v4(), socket.release());
 	snprintf(buf, sizeof(buf), "-%s#%d", ipPort_.c_str(), nextConnId_);
 	++nextConnId_;
-	TcpConnectionPtr conn = std::make_shared<TcpConnection>(std::move(socket), buf);
+	TcpConnectionPtr conn = std::make_shared<TcpConnection>(ioLoop, std::move(peerSocket), buf);
 	connections_[buf] = conn;
 	conn->setConnectionCallback(connectionCallback_);
 	conn->setMessageCallback(messageCallback_);
 	conn->setWriteCompleteCallback(writeCompleteCallback_);
 	conn->setCloseCallback(std::bind(&TcpServer::removeConnection, this, std::placeholders::_1));
-	// 投递给所属的io_context,去执行conn的IO事件
-	auto ios = conn->getIoService();
-	boost::asio::post(std::move(ios), std::bind(&TcpConnection::connectEstablished, conn));
+	ioLoop->dispatch(std::bind(&TcpConnection::connectEstablished, conn));
 }
 
 }

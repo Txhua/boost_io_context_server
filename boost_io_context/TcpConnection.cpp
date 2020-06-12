@@ -1,4 +1,5 @@
 ﻿#include "TcpConnection.h"
+#include "IOLoop.h"
 #include <boost/asio/read.hpp>
 #include <boost/asio/write.hpp>
 #include <boost/asio/socket_base.hpp>
@@ -7,8 +8,9 @@
 
 namespace IOEvent
 {
-TcpConnection::TcpConnection(ip::tcp::socket&& socket, const std::string& name)
-	:socket_(std::move(socket)),
+TcpConnection::TcpConnection(IOLoop *loop, ip::tcp::socket&& socket, const std::string& name)
+	:loop_(loop),
+	socket_(std::move(socket)),
 	name_(name),
 	state_(kConnecting)
 {
@@ -19,6 +21,7 @@ TcpConnection::~TcpConnection()
 {
 	LOG(INFO) << "TcpConnection::~TcpConnection name: " << name_;
 	socket_.close();
+	assert(state_ == kDisconnected);
 }
 
 void TcpConnection::connectEstablished()
@@ -31,6 +34,7 @@ void TcpConnection::connectEstablished()
 
 void TcpConnection::connectDestroyed()
 {
+	loop_->assertInLoopThread();
 	if (state_ == kConnected)
 	{
 		setState(kDisconnected);
@@ -52,7 +56,15 @@ void TcpConnection::send(Buffer * buf)
 {
 	if (state_ == kConnected)
 	{
-		boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::sendInThisThread, shared_from_this(), buf->retrieveAllAsString()));
+		if (loop_->isInLoopThread())
+		{
+			sendInThisThread(buf->retrieveAllAsString());
+		}
+		else
+		{
+			loop_->post(std::bind(&TcpConnection::sendInThisThread, shared_from_this(), buf->retrieveAllAsString()));
+		}
+		
 	}
 }
 

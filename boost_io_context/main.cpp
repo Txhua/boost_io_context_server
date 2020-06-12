@@ -6,7 +6,9 @@
 #include "ProtobufCodec.h"
 #include "TcpConnection.h"
 #include "query.pb.h"
-
+#include "TimerQueue.h"
+#include "ObjectPool.h"
+#include "IOLoop.h"
 using namespace IOEvent;
 
 using QueryPtr = std::shared_ptr<QueryDef::Query> ;
@@ -46,7 +48,7 @@ void InitGlog()
 class QueryServer
 {
 public:
-	QueryServer(boost::asio::io_context &ios,
+	QueryServer(IOLoop *ios,
 		const boost::asio::ip::tcp::endpoint &endpoint)
 		: server_(ios, endpoint),
 		dispatcher_(std::bind(&QueryServer::onUnknownMessage, this, std::placeholders::_1, std::placeholders::_2)),
@@ -103,6 +105,21 @@ private:
 	ProtobufCodec codec_;
 };
 
+void timeOut()
+{
+	LOG(INFO) << "time out";
+}
+
+void timeOut1()
+{
+	LOG(INFO) << "time out1";
+}
+
+using namespace std;
+
+
+
+
 int main(int argc, char* argv[])
 {
 	try
@@ -115,9 +132,41 @@ int main(int argc, char* argv[])
 		//IOEvent::TcpServer s(io_context, ep);
 		//s.setThreadNum(5);
 		//s.start();
-		QueryServer s(io_context, ep);
+		/*QueryServer s(io_context, ep);
+		s.start();*/
+		/*IOEvent::TimerQueue queue(io_context);
+		auto id = queue.addTimer(&timeOut, Timestamp::now(), 3);
+		queue.addTimer(&timeOut1, Timestamp::now(), 5);*/
+		/*std::thread t([&]()
+		{
+			std::this_thread::sleep_for(std::chrono::seconds(5));
+			queue.cancel(id);
+			queue.addTimer(&timeOut, Timestamp::now(), 2);
+		});*/
+		//io_context.run();
+		//t.join();
+
+		IOEvent::IOLoop loop;
+		IOEvent::TcpServer s(&loop, ep);
+		s.setThreadNum(5);
 		s.start();
-		io_context.run();
+		std::thread t([&]()
+		{
+			std::this_thread::sleep_for(std::chrono::seconds(10));
+			loop.quit();
+		});
+		loop.loop();
+		t.join();
+		/*loop.runEvery(5, [&]() {
+			LOG(INFO) << "Time out";
+		});
+		std::thread t([&]()
+		{
+			std::this_thread::sleep_for(std::chrono::seconds(10));
+			loop.quit();
+		});
+		loop.loop();
+		t.join();*/
 		google::ShutdownGoogleLogging();
 	}
 	catch (std::exception &e)
