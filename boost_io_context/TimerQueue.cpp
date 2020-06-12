@@ -26,12 +26,12 @@ TimerQueue::~TimerQueue()
 TimerId TimerQueue::addTimer(TimerCallback cb, const Timestamp & when, double interval)
 {
 	auto *timer = new Timer(std::move(cb), when, interval);
-	boost::asio::post(*baseLoop_->getContext(), std::bind(&TimerQueue::addTimerInThisThread, this, timer));
+	baseLoop_->dispatch(std::bind(&TimerQueue::addTimerInThisThread, this, timer));
 	return TimerId(timer, timer->sequence());
 }
 void TimerQueue::cancel(TimerId timerId)
 {
-	boost::asio::post(*baseLoop_->getContext(), std::bind(&TimerQueue::cancelInThisThread, this, timerId));
+	baseLoop_->dispatch(std::bind(&TimerQueue::cancelInThisThread, this, timerId));
 }
 
 void TimerQueue::addTimerInThisThread(Timer * timer)

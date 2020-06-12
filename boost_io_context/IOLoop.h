@@ -16,6 +16,7 @@ class IOLoop final
 	: public boost::noncopyable
 {
 	using FuncCallback = std::function<void()>;
+	using executor_work = executor_work_guard<io_context::executor_type>;
 public:
 	IOLoop();
 	~IOLoop();
@@ -35,7 +36,7 @@ private:
 	void quitInThisThread();
 private:
 	io_context ioContext_;
-	executor_work_guard<io_context::executor_type> work_;
+	executor_work work_;
 	std::thread::id threadId_;
 	std::unique_ptr<TimerQueue> timerQueue_;
 	std::atomic<bool> quit_;

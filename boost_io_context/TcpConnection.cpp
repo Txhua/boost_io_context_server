@@ -26,6 +26,7 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::connectEstablished()
 {
+	loop_->assertInLoopThread();
 	assert(state_ == kConnecting);
 	setState(kConnected);
 	if (connectionCallback_) connectionCallback_(shared_from_this());
@@ -63,8 +64,7 @@ void TcpConnection::send(Buffer * buf)
 		else
 		{
 			loop_->post(std::bind(&TcpConnection::sendInThisThread, shared_from_this(), buf->retrieveAllAsString()));
-		}
-		
+		}	
 	}
 }
 
@@ -72,13 +72,21 @@ void TcpConnection::send(std::string &&message)
 {
 	if (state_ == kConnected)
 	{
-		boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::sendInThisThread, shared_from_this(), std::forward<StringPiece>(message)));
+		if (loop_->isInLoopThread())
+		{
+			sendInThisThread(message);
+		}
+		else
+		{
+			loop_->post(std::bind(&TcpConnection::sendInThisThread, shared_from_this(), std::forward<StringPiece>(message)));
+		}		
 	}
 }
 
 
 void TcpConnection::sendInThisThread(const StringPiece &str)
 {
+	loop_->assertInLoopThread();
 	if (state_ == kDisconnected)
 	{
 		LOG(WARNING) << "disconnected, give up writing";
@@ -94,6 +102,7 @@ void TcpConnection::sendInThisThread(const StringPiece &str)
 
 void TcpConnection::shutdownInThisThread()
 {
+	loop_->assertInLoopThread();
 	if (outputBuffer_.readableBytes() == 0)
 	{
 		// 确保缓冲区的数据已被发送完
@@ -108,6 +117,7 @@ void TcpConnection::shutdownInThisThread()
 
 void TcpConnection::handleClose()
 {
+	loop_->assertInLoopThread();
 	assert(state_ == kConnected || state_ == kDisconnecting);
 	setState(kDisconnected);
 	TcpConnectionPtr guardThis(shared_from_this());

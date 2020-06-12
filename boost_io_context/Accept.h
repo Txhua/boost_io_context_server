@@ -24,8 +24,6 @@ private:
 private:
 	IOLoop *loop_;
 	ip::tcp::acceptor accept_;
-	//boost::asio::ip::tcp::socket socket_;
-	//std::unique_ptr<IOLoopThreadPool> threadPool_;
 	NewConnectCallback newConnectCallback_;
 };
 
