@@ -1,6 +1,11 @@
 //
-// Created By Txhua On 2020/6/13
+// Use of this source code is governed by a BSD-style
+// license that can be found in the License file.
 //
+// Author: Txhua
+// 
+// Copyright 2020, Txhua. All rights reserved.
+
 #ifndef _IOEVENT_CONNECTOR_H
 #define _IOEVENT_CONNECTOR_H
 
@@ -43,7 +48,7 @@ private:
 	int retryDelayMs_;
 	NewConnectionCallback newConnectionCallback_;
 	static const int kMaxRetryDelayMs = 30 * 1000;
-	static const int kInitRetryDelayMs = 500;
+	static const int kInitRetryDelayMs = 1000;
 };
 
 }

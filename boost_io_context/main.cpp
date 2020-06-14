@@ -11,9 +11,6 @@
 #include "IOLoop.h"
 using namespace IOEvent;
 
-using QueryPtr = std::shared_ptr<QueryDef::Query> ;
-using AnswerPtr = std::shared_ptr<QueryDef::Answer>;
-
 void InitGlog()
 {
 	// 设置输出路径
@@ -44,81 +41,7 @@ void InitGlog()
 	//默认捕捉 SIGSEGV 信号信息输出会输出到 stderr，可以通过下面的方法自定义输出>方式：
 	//google::InstallFailureWriter(&SignalHandle); 
 }
-
-class QueryServer
-{
-public:
-	QueryServer(IOLoop *ios,
-		const boost::asio::ip::tcp::endpoint &endpoint)
-		: server_(ios, endpoint),
-		dispatcher_(std::bind(&QueryServer::onUnknownMessage, this, std::placeholders::_1, std::placeholders::_2)),
-		codec_(std::bind(&Dispatcher::onMessage, &dispatcher_, std::placeholders::_1, std::placeholders::_2))
-	{
-		dispatcher_.registerMessageCallback<QueryDef::Query>(
-			std::bind(&QueryServer::onQuery, this, std::placeholders::_1, std::placeholders::_2));
-		dispatcher_.registerMessageCallback<QueryDef::Answer>(
-			std::bind(&QueryServer::onAnswer, this, std::placeholders::_1, std::placeholders::_2));
-		server_.setConnectionCallback(
-			std::bind(&QueryServer::onConnection, this, std::placeholders::_1));
-		server_.setMessageCallback(
-			std::bind(&ProtobufCodec::onMessage, &codec_, std::placeholders::_1, std::placeholders::_2));
-	}
-
-	void start()
-	{
-		server_.setThreadNum(5);
-		server_.start();
-	}
-
-private:
-	void onConnection(const TcpConnectionPtr& conn)
-	{
-		LOG(INFO) << conn->localAddr().address().to_string() << " -> "
-			<< conn->remoteAddr().address().to_string();
-	}
-
-	void onUnknownMessage(const TcpConnectionPtr& conn,const MessagePtr& message)
-	{
-		LOG(INFO) << "onUnknownMessage: " << message->GetTypeName();
-		conn->shutdown();
-	}
-
-	void onQuery(const TcpConnectionPtr& conn,const QueryPtr& message)
-	{
-		LOG(INFO) << "onQuery: " << message->GetTypeName() << message->DebugString();
-		QueryDef::Answer answer;
-		answer.set_id(1);
-		answer.set_questioner("Txhua");
-		answer.set_answerer("boost.org");
-		codec_.send(conn, &answer);
-		conn->shutdown();
-	}
-
-	void onAnswer(const TcpConnectionPtr& conn,const AnswerPtr& message)
-	{
-		LOG(INFO) << "onAnswer: " << message->GetTypeName();
-		conn->shutdown();
-	}
-
-	IOEvent::TcpServer server_;
-	Dispatcher dispatcher_;
-	ProtobufCodec codec_;
-};
-
-void timeOut()
-{
-	LOG(INFO) << "time out";
-}
-
-void timeOut1()
-{
-	LOG(INFO) << "time out1";
-}
-
 using namespace std;
-
-
-
 
 int main(int argc, char* argv[])
 {
@@ -126,47 +49,13 @@ int main(int argc, char* argv[])
 	{
 		InitGlog();
 		LOG(INFO) << "main thread tid: " << std::this_thread::get_id();
-		boost::asio::io_context io_context;
-		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work(boost::asio::make_work_guard(io_context));
 		boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string("127.0.0.1"), 8888);
-		//IOEvent::TcpServer s(io_context, ep);
-		//s.setThreadNum(5);
-		//s.start();
-		/*QueryServer s(io_context, ep);
-		s.start();*/
-		/*IOEvent::TimerQueue queue(io_context);
-		auto id = queue.addTimer(&timeOut, Timestamp::now(), 3);
-		queue.addTimer(&timeOut1, Timestamp::now(), 5);*/
-		/*std::thread t([&]()
-		{
-			std::this_thread::sleep_for(std::chrono::seconds(5));
-			queue.cancel(id);
-			queue.addTimer(&timeOut, Timestamp::now(), 2);
-		});*/
-		//io_context.run();
-		//t.join();
-
 		IOEvent::IOLoop loop;
 		IOEvent::TcpServer s(&loop, ep);
 		s.setThreadNum(5);
+		s.setMessageCallback([&](const TcpConnectionPtr &conn, Buffer *buf) {});
+		s.setConnectionCallback([&](const TcpConnectionPtr &conn) {});
 		s.start();
-		std::thread t([&]()
-		{
-			std::this_thread::sleep_for(std::chrono::seconds(10));
-			loop.quit();
-		});
-		loop.loop();
-		t.join();
-		/*loop.runEvery(5, [&]() {
-			LOG(INFO) << "Time out";
-		});
-		std::thread t([&]()
-		{
-			std::this_thread::sleep_for(std::chrono::seconds(10));
-			loop.quit();
-		});
-		loop.loop();
-		t.join();*/
 		google::ShutdownGoogleLogging();
 	}
 	catch (std::exception &e)
