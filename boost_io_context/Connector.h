@@ -25,6 +25,7 @@ public:
 	void start();
 	void stop();
 	void restart();
+	std::string serverAddress();
 private:
 	enum States { kDisconnected, kConnecting, kConnected };
 	void setState(States s) { state_ = s; }

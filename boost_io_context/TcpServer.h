@@ -1,4 +1,12 @@
-﻿#ifndef _IOEVENT_TCP_SERVER_H
+﻿//
+// Use of this source code is governed by a BSD-style
+// license that can be found in the License file.
+//
+// Author: Txhua
+// 
+// Copyright 2020, Txhua. All rights reserved.
+
+#ifndef _IOEVENT_TCP_SERVER_H
 #define _IOEVENT_TCP_SERVER_H
 
 #include "Callbacks.h"
@@ -21,7 +29,6 @@ public:
 	const std::string &ipPort()const { return ipPort_; }
 	void setConnectionCallback(ConnectionCallback cb) { connectionCallback_ = std::move(cb); }
 	void setMessageCallback(MessageCallback cb) { messageCallback_ = std::move(cb); }
-	void setWriteCompleteCallback(WriteCompleteCallback cb) { writeCompleteCallback_ = std::move(cb); }
 	void setThreadNum(int numThreads);
 	IOLoop *getLoop() const { return baseLoop_; }
 private:
@@ -37,7 +44,6 @@ private:
 	std::shared_ptr<IOLoopThreadPool> threadPool_;
 	ConnectionCallback connectionCallback_;
 	MessageCallback messageCallback_;
-	WriteCompleteCallback writeCompleteCallback_;
 	ConnectionMap connections_;
 };
 

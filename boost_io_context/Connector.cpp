@@ -44,6 +44,11 @@ void Connector::restart()
 	startInThisThread();
 }
 
+std::string Connector::serverAddress()
+{
+	return serverAddr_.address().to_string();
+}
+
 void Connector::connect()
 {
 	socket_ = ip::tcp::socket(*loop_->getContext());
@@ -83,7 +88,6 @@ void Connector::connect()
 				socket_.close();
 				break;
 			}
-
 			default:
 			{
 				LOG(ERROR) << "Unexpected error in Connector::connect " << error.message();

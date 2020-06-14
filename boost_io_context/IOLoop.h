@@ -1,3 +1,11 @@
+//
+// Use of this source code is governed by a BSD-style
+// license that can be found in the License file.
+//
+// Author: Txhua
+// 
+// Copyright 2020, Txhua. All rights reserved.
+
 #ifndef _IOEVENT_IO_LOOP
 #define _IOEVENT_IO_LOOP
 

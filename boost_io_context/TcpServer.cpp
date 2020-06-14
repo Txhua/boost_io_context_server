@@ -76,7 +76,6 @@ void TcpServer::newConnection(ip::tcp::socket && socket)
 	connections_[buf] = conn;
 	conn->setConnectionCallback(connectionCallback_);
 	conn->setMessageCallback(messageCallback_);
-	conn->setWriteCompleteCallback(writeCompleteCallback_);
 	conn->setCloseCallback(std::bind(&TcpServer::removeConnection, this, std::placeholders::_1));
 	ioLoop->dispatch(std::bind(&TcpConnection::connectEstablished, conn));
 }

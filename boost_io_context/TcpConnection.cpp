@@ -19,7 +19,7 @@ TcpConnection::TcpConnection(IOLoop *loop, ip::tcp::socket&& socket, const std::
 
 TcpConnection::~TcpConnection()
 {
-	LOG(INFO) << "TcpConnection::~TcpConnection name: " << name_;
+	LOG(INFO) << "TcpConnection exit name: " << name_;
 	socket_.close();
 	assert(state_ == kDisconnected);
 }
@@ -48,10 +48,19 @@ void TcpConnection::shutdown()
 	if (state_ == kConnected)
 	{
 		setState(kDisconnecting);
-		boost::asio::post(socket_.get_executor(), std::bind(&TcpConnection::shutdownInThisThread, shared_from_this()));
+		loop_->dispatch(std::bind(&TcpConnection::shutdownInThisThread, shared_from_this()));
 	}
 }
 
+
+void TcpConnection::forceClose()
+{
+	if (state_ == kConnected || state_ == kDisconnecting)
+	{
+		setState(kDisconnecting);
+		loop_->post(std::bind(&TcpConnection::forceCloseInThisThread, shared_from_this()));
+	}
+}
 
 void TcpConnection::send(Buffer * buf)
 {
@@ -64,7 +73,7 @@ void TcpConnection::send(Buffer * buf)
 		else
 		{
 			loop_->post(std::bind(&TcpConnection::sendInThisThread, shared_from_this(), buf->retrieveAllAsString()));
-		}	
+		}
 	}
 }
 
@@ -79,7 +88,7 @@ void TcpConnection::send(std::string &&message)
 		else
 		{
 			loop_->post(std::bind(&TcpConnection::sendInThisThread, shared_from_this(), std::forward<StringPiece>(message)));
-		}		
+		}
 	}
 }
 
@@ -123,6 +132,15 @@ void TcpConnection::handleClose()
 	TcpConnectionPtr guardThis(shared_from_this());
 	if (connectionCallback_) connectionCallback_(guardThis);
 	if (closeCallback_) closeCallback_(guardThis);
+}
+
+void TcpConnection::forceCloseInThisThread()
+{
+	loop_->assertInLoopThread();
+	if (state_ == kConnected || state_ == kDisconnecting)
+	{
+		handleClose();
+	}
 }
 
 void TcpConnection::readHeader()
