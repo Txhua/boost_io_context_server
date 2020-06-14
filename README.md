@@ -1,6 +1,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the License file.
 // Author: Txhua
+
 IOEvent 是基于boost::asio 封装的一个通用的Tcp网络库,不支持UDP
 包含的功能:
 	1、c++11的线程池
