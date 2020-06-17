@@ -8,13 +8,13 @@
 
 namespace IOEvent
 {
-TcpConnection::TcpConnection(IOLoop *loop, ip::tcp::socket&& socket, const std::string& name)
+TcpConnection::TcpConnection(IOLoop *loop, Socket && socket, const std::string& name)
 	:loop_(loop),
 	socket_(std::move(socket)),
 	name_(name),
 	state_(kConnecting)
 {
-	socket_.set_option(ip::tcp::no_delay(true));
+	socket_.set_option(boost::asio::ip::tcp::no_delay(true));
 }
 
 TcpConnection::~TcpConnection()
@@ -116,7 +116,7 @@ void TcpConnection::shutdownInThisThread()
 	{
 		// 确保缓冲区的数据已被发送完
 		boost::system::error_code error;
-		socket_.shutdown(socket_base::shutdown_type::shutdown_send, error);
+		socket_.shutdown(boost::asio::socket_base::shutdown_type::shutdown_send, error);
 		if (error)
 		{
 			LOG(ERROR) << "socket_.shutdown, error message : " << error.message();

@@ -18,24 +18,26 @@
 
 namespace IOEvent
 {
-using namespace boost::asio;
+
 class IOLoop;
 class TcpConnection final
 	: public std::enable_shared_from_this<TcpConnection>,
 	public boost::noncopyable
 {
+	using Socket = boost::asio::ip::tcp::socket;
+	using Endpoint = boost::asio::ip::tcp::endpoint;
 public:
-	explicit TcpConnection(IOLoop *loop, ip::tcp::socket &&socket, const std::string &name);
+	explicit TcpConnection(IOLoop *loop, Socket &&socket, const std::string &name);
 	~TcpConnection();
-	ip::tcp::endpoint localAddr() const { return socket_.local_endpoint(); }
-	ip::tcp::endpoint remoteAddr()const { return socket_.remote_endpoint(); }
+	Endpoint localAddr() const { return socket_.local_endpoint(); }
+	Endpoint remoteAddr()const { return socket_.remote_endpoint(); }
 	void setConnectionCallback(ConnectionCallback cb) { connectionCallback_ = std::move(cb); }
 	void setMessageCallback(MessageCallback cb) { messageCallback_ = std::move(cb); }
 	void setCloseCallback(CloseCallback cb) { closeCallback_ = std::move(cb); }
 	// ! 当有新的连接到来时被调用(只能被调用一次)
 	void connectEstablished();
 	// ! 被TcpServer移除时调用(只能被调用一次)
-	void connectDestroyed(); 
+	void connectDestroyed();
 	bool connected()const { return state_ == kConnected; }
 	const std::string &name()const { return name_; }
 	Buffer *inputBuffer() { return &inputBuffer_; }
@@ -61,7 +63,7 @@ private:
 	IOLoop *loop_;
 	const std::string name_;
 	StateE state_;
-	ip::tcp::socket socket_;
+	Socket socket_;
 	Buffer inputBuffer_;
 	Buffer outputBuffer_;
 	ConnectionCallback connectionCallback_;

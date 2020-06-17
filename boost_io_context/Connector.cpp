@@ -1,4 +1,4 @@
-#include "Connector.h"
+Ôªø#include "Connector.h"
 #include "IOLoop.h"
 #include <cassert>
 #include <glog/logging.h>
@@ -7,7 +7,7 @@
 namespace IOEvent
 {
 
-Connector::Connector(IOLoop * loop, const ip::tcp::endpoint & endpoint)
+Connector::Connector(IOLoop * loop, const Endpoint & endpoint)
 	:loop_(loop),
 	socket_(*loop->getContext()),
 	serverAddr_(endpoint),
@@ -51,49 +51,49 @@ std::string Connector::serverAddress()
 
 void Connector::connect()
 {
-	socket_ = ip::tcp::socket(*loop_->getContext());
+	socket_ = Socket(*loop_->getContext());
 	auto self(shared_from_this());
 	socket_.async_connect(serverAddr_, [self, this](const boost::system::error_code &error)
 	{
 		switch (error.value())
 		{
-			case boost::system::errc::success:
-			case boost::system::errc::operation_in_progress:
-			case boost::system::errc::interrupted:
-			case boost::system::errc::already_connected:
-			{
-				// ’˝‘⁄¡¨Ω”
-				connecting();
-				break;
-			}
-			case boost::system::errc::resource_unavailable_try_again:
-			case boost::system::errc::address_in_use:
-			case boost::system::errc::address_not_available:
-			case boost::system::errc::connection_refused:
-			case boost::system::errc::network_unreachable:
-			{
-				// ≥¢ ‘÷ÿ–¬¡¨Ω”
-				retry();
-				break;
-			}
-			case boost::system::errc::permission_denied:
-			case boost::system::errc::operation_not_permitted:
-			case boost::system::errc::address_family_not_supported:
-			case boost::system::errc::connection_already_in_progress:
-			case boost::system::errc::bad_file_descriptor:
-			case boost::system::errc::bad_address:
-			case boost::system::errc::not_a_socket:
-			{
-				LOG(ERROR) << "connect error in Connector::connect " << error.message();
-				socket_.close();
-				break;
-			}
-			default:
-			{
-				LOG(ERROR) << "Unexpected error in Connector::connect " << error.message();
-				socket_.close();
-				break;
-			}
+		case boost::system::errc::success:
+		case boost::system::errc::operation_in_progress:
+		case boost::system::errc::interrupted:
+		case boost::system::errc::already_connected:
+		{
+			// Ê≠£Âú®ËøûÊé•
+			connecting();
+			break;
+		}
+		case boost::system::errc::resource_unavailable_try_again:
+		case boost::system::errc::address_in_use:
+		case boost::system::errc::address_not_available:
+		case boost::system::errc::connection_refused:
+		case boost::system::errc::network_unreachable:
+		{
+			// Â∞ùËØïÈáçÊñ∞ËøûÊé•
+			retry();
+			break;
+		}
+		case boost::system::errc::permission_denied:
+		case boost::system::errc::operation_not_permitted:
+		case boost::system::errc::address_family_not_supported:
+		case boost::system::errc::connection_already_in_progress:
+		case boost::system::errc::bad_file_descriptor:
+		case boost::system::errc::bad_address:
+		case boost::system::errc::not_a_socket:
+		{
+			LOG(ERROR) << "connect error in Connector::connect " << error.message();
+			socket_.close();
+			break;
+		}
+		default:
+		{
+			LOG(ERROR) << "Unexpected error in Connector::connect " << error.message();
+			socket_.close();
+			break;
+		}
 		}
 	});
 }
@@ -105,7 +105,7 @@ void Connector::retry()
 	if (connect_)
 	{
 		LOG(INFO) << "Connector::retry - Retry connecting to " << serverAddr_.address().to_string() << " in " << retryDelayMs_ << " milliseconds. ";
-		loop_->runAfter(retryDelayMs_ / 1000.0,std::bind(&Connector::startInThisThread, shared_from_this()));
+		loop_->runAfter(retryDelayMs_ / 1000.0, std::bind(&Connector::startInThisThread, shared_from_this()));
 		retryDelayMs_ = std::min(retryDelayMs_ * 2, kMaxRetryDelayMs);
 	}
 	else

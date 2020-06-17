@@ -1,7 +1,5 @@
 ﻿#include "Accept.h"
 #include <boost/system/error_code.hpp>
-#include <iostream>
-#include "IOLoopThreadPool.h"
 #include <glog/logging.h>
 #include "IOLoop.h"
 namespace IOEvent
@@ -43,7 +41,7 @@ void Acceptor::setNewConnectCallback(NewConnectCallback cb)
 
 void Acceptor::accept()
 {
-	accept_.async_accept([&](const boost::system::error_code &error, ip::tcp::socket &&socket)
+	accept_.async_accept([&](const boost::system::error_code &error, Socket &&socket)
 	{
 		if (!error)
 		{

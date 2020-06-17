@@ -15,15 +15,16 @@
 #include <map>
 namespace IOEvent
 {
-using namespace boost::asio;
 class Acceptor;
 class IOLoop;
 class IOLoopThreadPool;
 class TcpServer
 {
+	using Endpoint = boost::asio::ip::tcp::endpoint;
+	using Socket = boost::asio::ip::tcp::socket;
 	using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
 public:
-	TcpServer(IOLoop *loop, const ip::tcp::endpoint &endpoint);
+	TcpServer(IOLoop *loop, const Endpoint &endpoint);
 	~TcpServer();
 	void start();
 	const std::string &ipPort()const { return ipPort_; }
@@ -34,7 +35,7 @@ public:
 private:
 	void removeConnection(const TcpConnectionPtr &conn);
 	void removeConnectionInThisThread(const TcpConnectionPtr &conn);
-	void newConnection(ip::tcp::socket &&socket);
+	void newConnection(Socket &&socket);
 private:
 	IOLoop *baseLoop_;
 	uint32_t nextConnId_;

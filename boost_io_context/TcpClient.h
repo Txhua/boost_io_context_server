@@ -1,4 +1,4 @@
-//
+﻿//
 // Use of this source code is governed by a BSD-style
 // license that can be found in the License file.
 //
@@ -15,13 +15,14 @@
 #include "Callbacks.h"
 namespace IOEvent
 {
-using namespace boost::asio;
 class Connector;
 class IOLoop;
 class TcpClient
 {
+	using Socket = boost::asio::ip::tcp::socket;
+	using Endpoint = boost::asio::ip::tcp::endpoint;
 public:
-	TcpClient(IOLoop *loop, const ip::tcp::endpoint &serverAddr,const std::string &name);
+	TcpClient(IOLoop *loop, const Endpoint &serverAddr, const std::string &name);
 	~TcpClient();
 	void connect();
 	void disconnect();
@@ -34,7 +35,7 @@ public:
 	void setMessageCallback(MessageCallback cb) { messageCallback_ = std::move(cb); }
 	void setConnectionCallback(ConnectionCallback cb) { connectionCallback_ = std::move(cb); }
 private:
-	void newConnection(ip::tcp::socket &&socket);
+	void newConnection(Socket &&socket);
 	void removeConnection(const TcpConnectionPtr &conn);
 private:
 	IOLoop *loop_;
@@ -57,4 +58,3 @@ private:
 
 
 #endif // !_IOEVENT_TCP_CLIENT_H
-

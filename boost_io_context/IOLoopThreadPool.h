@@ -16,7 +16,7 @@
 
 namespace IOEvent
 {
-using namespace boost::asio;
+
 class IOLoopThread;
 class IOLoop;
 class IOLoopThreadPool final : public boost::noncopyable

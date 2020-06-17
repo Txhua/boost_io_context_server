@@ -1,4 +1,4 @@
-#include "TcpClient.h"
+﻿#include "TcpClient.h"
 #include "IOLoop.h"
 #include "TcpConnection.h"
 #include "Connector.h"
@@ -19,7 +19,7 @@ void removeConnection(IOLoop* loop, const TcpConnectionPtr& conn)
 
 }
 
-TcpClient::TcpClient(IOLoop * loop, const ip::tcp::endpoint & serverAddr, const std::string & name)
+TcpClient::TcpClient(IOLoop * loop, const Endpoint & serverAddr, const std::string & name)
 	:loop_(loop),
 	connector_(std::make_shared<Connector>(loop, serverAddr)),
 	name_(name),
@@ -57,7 +57,7 @@ TcpClient::~TcpClient()
 
 void TcpClient::connect()
 {
-	LOG(INFO) << "TcpClient::connect[" << name_ << "] - connecting to "<< connector_->serverAddress();
+	LOG(INFO) << "TcpClient::connect[" << name_ << "] - connecting to " << connector_->serverAddress();
 	connect_ = true;
 	connector_->start();
 }
@@ -91,7 +91,7 @@ TcpConnectionPtr TcpClient::connection() const
 	return connection_;
 }
 
-void TcpClient::newConnection(ip::tcp::socket && socket)
+void TcpClient::newConnection(Socket && socket)
 {
 	loop_->assertInLoopThread();
 	char buf[32];

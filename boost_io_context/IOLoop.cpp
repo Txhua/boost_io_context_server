@@ -1,16 +1,18 @@
-#include "IOLoop.h"
+ï»¿#include "IOLoop.h"
 #include "TimerQueue.h"
 #include "CurrentThread.h"
 #include <glog/logging.h>
 #include <boost/asio/post.hpp>
 #include <boost/asio/dispatch.hpp>
 
+
+
 namespace IOEvent
 {
 
 //
-// one loop per thread ¹ËÃûË¼Òå¾ÍÊÇÃ¿¸öÏß³ÌÓĞÇÒÖ»ÓĞÒ»¸öio_context,ËùÒÔIOLoopµÄ¹¹Ôìº¯Êı»á¼ì²âµ±Ç°Ïß³ÌÊÇ·ñÒÑ¾­´´½¨ÁËIOEvent
-// ÊµÏÖ¾ÍÊÇÓÃµ½thread_local»º´æÒ»¸öIOLoop
+// one loop per thread é¡¾åæ€ä¹‰å°±æ˜¯æ¯ä¸ªçº¿ç¨‹æœ‰ä¸”åªæœ‰ä¸€ä¸ªio_context,æ‰€ä»¥IOLoopçš„æ„é€ å‡½æ•°ä¼šæ£€æµ‹å½“å‰çº¿ç¨‹æ˜¯å¦å·²ç»åˆ›å»ºäº†IOEvent
+// å®ç°å°±æ˜¯ç”¨åˆ°thread_localç¼“å­˜ä¸€ä¸ªIOLoop
 //
 
 thread_local IOLoop *t_inThisThreadLoop = nullptr;
@@ -19,7 +21,7 @@ IOLoop::IOLoop()
 	timerQueue_(std::make_unique<TimerQueue>(this)),
 	work_(make_work_guard(ioContext_)),
 	threadId_(CurrentThread::tid()),
-	quit_(false)	
+	quit_(false)
 {
 	if (t_inThisThreadLoop)
 	{
@@ -107,8 +109,8 @@ void IOLoop::loop()
 
 void IOLoop::quit()
 {
-	quit_ = true;	
-	post(std::bind(&IOLoop::quitInThisThread, this));	
+	quit_ = true;
+	post(std::bind(&IOLoop::quitInThisThread, this));
 }
 
 void IOLoop::abortNotInLoopThread()

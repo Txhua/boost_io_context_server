@@ -1,4 +1,4 @@
-//
+﻿//
 // Use of this source code is governed by a BSD-style
 // license that can be found in the License file.
 //
@@ -18,13 +18,14 @@
 
 namespace IOEvent
 {
-using namespace boost::asio;
+
 class TimerQueue;
-class IOLoop final 
+class IOLoop final
 	: public boost::noncopyable
 {
 	using FuncCallback = std::function<void()>;
-	using executor_work = executor_work_guard<io_context::executor_type>;
+	using io_context = boost::asio::io_context;
+	using executor_work_guard = boost::asio::executor_work_guard<io_context::executor_type>;
 public:
 	IOLoop();
 	~IOLoop();
@@ -44,7 +45,7 @@ private:
 	void quitInThisThread();
 private:
 	io_context ioContext_;
-	executor_work work_;
+	executor_work_guard work_;
 	std::thread::id threadId_;
 	std::unique_ptr<TimerQueue> timerQueue_;
 	std::atomic<bool> quit_;

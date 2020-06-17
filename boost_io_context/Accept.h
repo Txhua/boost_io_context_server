@@ -8,20 +8,22 @@
 
 #ifndef _IOEVENT_ACCEPT_H
 #define _IOEVENT_ACCEPT_H
+
+
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/noncopyable.hpp>
 #include <functional>
-#include <memory>
 
 namespace IOEvent
 {
-using namespace boost::asio;
 class IOLoopThreadPool;
 class IOLoop;
 class Acceptor final : public boost::noncopyable
 {
-	using NewConnectCallback = std::function<void(ip::tcp::socket &&sock)>;
-	using Endpoint = ip::tcp::endpoint;
+	using Socket = boost::asio::ip::tcp::socket;
+	using acceptor = boost::asio::ip::tcp::acceptor;
+	using NewConnectCallback = std::function<void(Socket &&sock)>;
+	using Endpoint = boost::asio::ip::tcp::endpoint;
 public:
 	explicit Acceptor(IOLoop *loop, const Endpoint &endpoint);
 	~Acceptor();
@@ -31,7 +33,7 @@ private:
 	void accept();
 private:
 	IOLoop *loop_;
-	ip::tcp::acceptor accept_;
+	acceptor accept_;
 	NewConnectCallback newConnectCallback_;
 };
 

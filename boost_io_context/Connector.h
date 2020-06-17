@@ -1,4 +1,4 @@
-//
+﻿//
 // Use of this source code is governed by a BSD-style
 // license that can be found in the License file.
 //
@@ -15,16 +15,17 @@
 
 namespace IOEvent
 {
-using namespace boost::asio;
 class IOLoop;
-class Connector final : 
+class Connector final :
 	public boost::noncopyable,
 	public std::enable_shared_from_this<Connector>
 {
+	using Socket = boost::asio::ip::tcp::socket;
+	using Endpoint = boost::asio::ip::tcp::endpoint;
 	using SocketErrorType = boost::asio::detail::socket_option::integer<SOL_SOCKET, SO_ERROR>;
-	using NewConnectionCallback = std::function<void(ip::tcp::socket &&socket)>;
+	using NewConnectionCallback = std::function<void(Socket &&sock)>;
 public:
-	explicit Connector(IOLoop *loop, const ip::tcp::endpoint &endpoint);
+	explicit Connector(IOLoop *loop, const Endpoint &endpoint);
 	~Connector();
 	void setNewConnectionCallback(NewConnectionCallback cb) { newConnectionCallback_ = std::move(cb); }
 	void start();
@@ -41,8 +42,8 @@ private:
 	void connecting();
 private:
 	IOLoop *loop_;
-	ip::tcp::socket socket_;
-	ip::tcp::endpoint serverAddr_;
+	Socket socket_;
+	Endpoint serverAddr_;
 	std::atomic<bool> connect_;
 	States state_;
 	int retryDelayMs_;

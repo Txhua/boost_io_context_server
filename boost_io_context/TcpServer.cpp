@@ -8,7 +8,7 @@
 
 namespace IOEvent
 {
-TcpServer::TcpServer(IOLoop *loop, const ip::tcp::endpoint & endpoint)
+TcpServer::TcpServer(IOLoop *loop, const Endpoint & endpoint)
 	:baseLoop_(loop),
 	accept_(std::make_unique<Acceptor>(loop, endpoint)),
 	threadPool_(std::make_shared<IOLoopThreadPool>(loop)),
@@ -63,13 +63,13 @@ void TcpServer::removeConnectionInThisThread(const TcpConnectionPtr & conn)
 	ioLoop->post(std::bind(&TcpConnection::connectDestroyed, conn));
 }
 
-void TcpServer::newConnection(ip::tcp::socket && socket)
+void TcpServer::newConnection(Socket && socket)
 {
 	baseLoop_->assertInLoopThread();
 	char buf[64];
 	auto *ioLoop = threadPool_->getNextIOLoop();
-	ip::tcp::socket peerSocket(*ioLoop->getContext());
-	peerSocket.assign(ip::tcp::v4(), socket.release());
+	Socket peerSocket(*ioLoop->getContext());
+	peerSocket.assign(boost::asio::ip::tcp::v4(), socket.release());
 	snprintf(buf, sizeof(buf), "-%s#%d", ipPort_.c_str(), nextConnId_);
 	++nextConnId_;
 	TcpConnectionPtr conn = std::make_shared<TcpConnection>(ioLoop, std::move(peerSocket), buf);

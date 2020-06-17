@@ -5,10 +5,9 @@
 #include "Dispatcher.h"
 #include "ProtobufCodec.h"
 #include "TcpConnection.h"
-#include "query.pb.h"
 #include "TimerQueue.h"
-#include "ObjectPool.h"
 #include "IOLoop.h"
+
 using namespace IOEvent;
 
 void InitGlog()
@@ -56,6 +55,7 @@ int main(int argc, char* argv[])
 		s.setMessageCallback([&](const TcpConnectionPtr &conn, Buffer *buf) {});
 		s.setConnectionCallback([&](const TcpConnectionPtr &conn) {});
 		s.start();
+		loop.loop();
 		google::ShutdownGoogleLogging();
 	}
 	catch (std::exception &e)
