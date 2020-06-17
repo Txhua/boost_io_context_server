@@ -1,12 +1,11 @@
 ﻿#include "TcpServer.h"
-#include <iostream>
 #include <boost/asio.hpp>
 #include <glog/logging.h>
 #include "Dispatcher.h"
 #include "ProtobufCodec.h"
 #include "TcpConnection.h"
-#include "TimerQueue.h"
 #include "IOLoop.h"
+#include "Singleton.h"
 
 using namespace IOEvent;
 
@@ -49,13 +48,14 @@ int main(int argc, char* argv[])
 		InitGlog();
 		LOG(INFO) << "main thread tid: " << std::this_thread::get_id();
 		boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string("127.0.0.1"), 8888);
-		IOEvent::IOLoop loop;
-		IOEvent::TcpServer s(&loop, ep);
+		auto l = Singleton<IOLoop>::instance();
+		//IOEvent::IOLoop loop;
+		IOEvent::TcpServer s(&*l, ep);
 		s.setThreadNum(5);
 		s.setMessageCallback([&](const TcpConnectionPtr &conn, Buffer *buf) {});
 		s.setConnectionCallback([&](const TcpConnectionPtr &conn) {});
 		s.start();
-		loop.loop();
+		l->loop();
 		google::ShutdownGoogleLogging();
 	}
 	catch (std::exception &e)

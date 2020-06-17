@@ -1,4 +1,4 @@
-//
+ï»¿//
 // Use of this source code is governed by a BSD-style
 // license that can be found in the License file.
 //
@@ -44,7 +44,7 @@ private:
 };
 
 template<typename _FuncType, typename ...Args>
-inline std::future<typename std::result_of<_FuncType(Args...)>::type> 
+inline std::future<typename std::result_of<_FuncType(Args...)>::type>
 ThreadPool::postFuture(_FuncType &&func, Args && ...args)
 {
 	using return_type = typename std::result_of<_FuncType(Args...)>::type;
@@ -52,13 +52,13 @@ ThreadPool::postFuture(_FuncType &&func, Args && ...args)
 	auto t = std::make_shared<task>(std::bind(std::forward<_FuncType>(func), std::forward<Args>(args)...));
 	{
 		std::unique_lock<std::mutex> lock(mutex_);
-		if (!runing_) 
+		if (!runing_)
 		{
 			throw std::runtime_error("thread pool has stopped");
 		}
 		while (maxQueueSize_ > 0 && queue_.size() >= maxQueueSize_)
 		{
-			// ÒÑÂú (Ö»ÓÐµ± lambad Ìõ¼þÎª false Ê±µ÷ÓÃ wait() ²Å»á×èÈûµ±Ç°Ïß³Ì£¬²¢ÇÒÔÚÊÕµ½ÆäËûÏß³ÌµÄÍ¨ÖªºóÖ»ÓÐµ± lambad Îª true Ê±²Å»á±»½â³ý×èÈû)
+			// å·²æ»¡ (åªæœ‰å½“ lambda æ¡ä»¶ä¸º false æ—¶è°ƒç”¨ wait() æ‰ä¼šé˜»å¡žå½“å‰çº¿ç¨‹ï¼Œå¹¶ä¸”åœ¨æ”¶åˆ°å…¶ä»–çº¿ç¨‹çš„é€šçŸ¥åŽåªæœ‰å½“ lambda ä¸º true æ—¶æ‰ä¼šè¢«è§£é™¤é˜»å¡ž)
 			notFull_.wait(lock, [&]()->bool {return queue_.size() < maxQueueSize_ || !runing_; });
 		}
 		queue_.emplace([t]() {(*t)(); });
@@ -71,4 +71,3 @@ ThreadPool::postFuture(_FuncType &&func, Args && ...args)
 
 
 #endif // !_IOEVENT_THREAD_POOL_H
-

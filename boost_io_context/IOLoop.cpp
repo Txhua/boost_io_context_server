@@ -81,7 +81,7 @@ void IOLoop::dispatch(FuncCallback cb)
 	}
 	else
 	{
-		post(cb);
+		post(std::move(cb));
 	}
 }
 
