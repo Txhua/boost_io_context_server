@@ -48,14 +48,13 @@ int main(int argc, char* argv[])
 		InitGlog();
 		LOG(INFO) << "main thread tid: " << std::this_thread::get_id();
 		boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string("127.0.0.1"), 8888);
-		auto l = Singleton<IOLoop>::instance();
-		//IOEvent::IOLoop loop;
-		IOEvent::TcpServer s(&*l, ep);
+		auto loop = Singleton<IOLoop>::instance();
+		IOEvent::TcpServer s(&*loop, ep);
 		s.setThreadNum(5);
 		s.setMessageCallback([&](const TcpConnectionPtr &conn, Buffer *buf) {});
 		s.setConnectionCallback([&](const TcpConnectionPtr &conn) {});
 		s.start();
-		l->loop();
+		loop->loop();
 		google::ShutdownGoogleLogging();
 	}
 	catch (std::exception &e)

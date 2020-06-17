@@ -32,7 +32,7 @@ public:
 	}
 protected:
 	Singleton() = delete;
-	~Singleton() = delete;
+	~Singleton() = default;
 private:
 	static std::shared_ptr<_Type> inst_;
 	static std::once_flag flag_;
