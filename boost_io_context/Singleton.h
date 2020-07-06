@@ -17,7 +17,8 @@
 namespace IOEvent
 {
 template <typename _Type>
-class Singleton : public boost::noncopyable
+class Singleton
+	: public boost::noncopyable
 {
 public:
 	template <typename ...Args>
@@ -31,7 +32,7 @@ public:
 		return inst_;
 	}
 protected:
-	Singleton() = delete;
+	Singleton() = default;
 	~Singleton() = default;
 private:
 	static std::shared_ptr<_Type> inst_;
