@@ -1,7 +1,6 @@
-#include "TimerQueue.h"
+ï»¿#include "TimerQueue.h"
 #include "Timer.h"
 #include "IOLoop.h"
-#include <boost/asio/post.hpp>
 #include <cassert>
 
 namespace IOEvent
@@ -76,7 +75,7 @@ bool TimerQueue::insert(Timer * timer)
 		auto result = timers_.emplace(Entry(when, timer));
 		assert(result.second); (void)result;
 	}
-	{		
+	{
 		auto result = activeTimers_.emplace(ActiveTimer(timer, timer->sequence()));
 		assert(result.second); (void)result;
 	}
@@ -98,14 +97,14 @@ void TimerQueue::resetTimer(const Timestamp & when)
 void TimerQueue::update(time_t sec)
 {
 	steadyTimer_.expires_from_now(std::chrono::seconds(sec));
-	steadyTimer_.async_wait([&](const boost::system::error_code &error) 
+	steadyTimer_.async_wait([&](const boost::system::error_code &error)
 	{
 		if (!error)
 		{
-			// »ñÈ¡¹ıÆÚµÄÊ±¼ä
+			// è·å–è¿‡æœŸçš„æ—¶é—´
 			auto now = Timestamp::now();
 			auto expired = getExpired(now);
-			// Ö´ĞĞ¹ıÆÚÈÎÎñ
+			// æ‰§è¡Œè¿‡æœŸä»»åŠ¡
 			cancelingTimers_.clear();
 			callingExpiredTimers_ = true;
 			for (auto &timer : expired)
@@ -113,7 +112,7 @@ void TimerQueue::update(time_t sec)
 				timer.second->run();
 			}
 			callingExpiredTimers_ = false;
-			// ÖØĞÂÉèÖÃ¶¨Ê±Æ÷
+			// é‡æ–°è®¾ç½®å®šæ—¶å™¨
 			reset(expired, now);
 		}
 	});
@@ -127,9 +126,9 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(const Timestamp & now)
 	auto end = timers_.lower_bound(entry);
 	assert(end == timers_.end() || now < end->first);
 	std::copy(timers_.begin(), end, std::back_inserter(expired));
-	// É¾³ı¹ıÆÚµÄÊ±¼ä
+	// åˆ é™¤è¿‡æœŸçš„æ—¶é—´
 	timers_.erase(timers_.begin(), end);
-	// É¾³ı¹ıÆÚµÄ»î¶¯Ê±¼ä
+	// åˆ é™¤è¿‡æœŸçš„æ´»åŠ¨æ—¶é—´
 	for (auto &exp : expired)
 	{
 		ActiveTimer timer(exp.second, exp.second->sequence());

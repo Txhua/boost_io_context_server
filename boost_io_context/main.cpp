@@ -6,6 +6,7 @@
 #include "TcpConnection.h"
 #include "IOLoop.h"
 #include "Singleton.h"
+#include "CurrentThread.h"
 
 using namespace IOEvent;
 
@@ -46,7 +47,7 @@ int main(int argc, char* argv[])
 	try
 	{
 		InitGlog();
-		LOG(INFO) << "main thread tid: " << std::this_thread::get_id();
+		LOG(INFO) << "main thread tid: " << CurrentThread::tid();
 		boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string("127.0.0.1"), 8888);
 		auto loop = Singleton<IOLoop>::instance();
 		IOEvent::TcpServer s(&*loop, ep);

@@ -1,5 +1,4 @@
 ﻿#include "Thread.h"
-#include <iostream>
 #include <memory>
 #include <assert.h>
 #include "CurrentThread.h"

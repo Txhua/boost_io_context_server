@@ -12,8 +12,6 @@
 #include <boost/noncopyable.hpp>
 #include <mutex>
 #include <condition_variable>
-#include <iostream>
-#include <chrono>
 
 namespace IOEvent
 {

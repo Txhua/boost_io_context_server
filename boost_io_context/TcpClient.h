@@ -17,7 +17,8 @@ namespace IOEvent
 {
 class Connector;
 class IOLoop;
-class TcpClient
+class TcpClient final
+	: public boost::noncopyable
 {
 	using Socket = boost::asio::ip::tcp::socket;
 	using Endpoint = boost::asio::ip::tcp::endpoint;

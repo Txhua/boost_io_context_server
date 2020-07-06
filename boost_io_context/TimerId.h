@@ -1,4 +1,4 @@
-//
+﻿//
 // Use of this source code is governed by a BSD-style
 // license that can be found in the License file.
 //
@@ -8,8 +8,6 @@
 
 #ifndef _IOEVENT_TIMERID_H
 #define _IOEVENT_TIMERID_H
-
-#include <memory>
 
 namespace IOEvent
 {

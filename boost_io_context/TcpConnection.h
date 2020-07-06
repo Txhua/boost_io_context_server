@@ -14,7 +14,6 @@
 #include <memory>
 #include "Callbacks.h"
 #include "Buffer.h"
-#include <array>
 
 namespace IOEvent
 {

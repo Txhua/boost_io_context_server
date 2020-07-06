@@ -1,6 +1,5 @@
 ﻿#include "IOLoopThread.h"
 #include <cassert>
-#include "Types.h"
 #include "IOLoop.h"
 
 namespace IOEvent
